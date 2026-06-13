@@ -1,13 +1,13 @@
 # Tool Matrix — Skills + Toolsets per Role
 
-Maps each role archetype to the Hermes skills it should `always_load` and the
-toolsets it needs. Only references skills that ship in the public hermes-agent
+Maps each role archetype to the Athena skills it should `always_load` and the
+toolsets it needs. Only references skills that ship in the public athena-agent
 repository (under `skills/` or `optional-skills/`). External APIs and CLIs are
 called from the terminal toolset; they don't appear in `always_load`.
 
-## Hermes skills relevant to video production
+## Athena skills relevant to video production
 
-### Visual / rendering skills (`hermes-agent/skills/creative/`)
+### Visual / rendering skills (`athena-agent/skills/creative/`)
 
 | Skill | What it does | Best fit for |
 |-------|--------------|--------------|
@@ -23,7 +23,7 @@ called from the terminal toolset; they don't appear in `always_load`.
 | `baoyu-infographic` | Infographic generation | Renderer for data-driven explainer scenes |
 | `meme-generation` *(optional)* | Generate meme images by overlaying text on templates | Generator for satirical/social content; meme-style stills |
 
-### Design / pre-production skills (`hermes-agent/skills/creative/`)
+### Design / pre-production skills (`athena-agent/skills/creative/`)
 
 | Skill | What it does | Best fit for |
 |-------|--------------|--------------|
@@ -38,7 +38,7 @@ called from the terminal toolset; they don't appear in `always_load`.
 | `creative-ideation` | Constraint-driven project ideation | Director / cinematographer when the brief is wide-open and needs framing |
 | `humanizer` | Strip AI-isms from text, add real voice | Writer / copywriter post-process to avoid AI-tells in scripts and VO copy |
 
-### Audio / media skills (`hermes-agent/skills/creative/` + `skills/media/`)
+### Audio / media skills (`athena-agent/skills/creative/` + `skills/media/`)
 
 | Skill | What it does | Best fit for |
 |-------|--------------|--------------|
@@ -50,7 +50,7 @@ called from the terminal toolset; they don't appear in `always_load`.
 | `gif-search` | Find existing GIFs | Editor / concept artist sourcing references |
 | `gifs` | GIF tooling | Masterer producing GIF deliverables |
 
-### Kanban infrastructure (`hermes-agent/skills/devops/`)
+### Kanban infrastructure (`athena-agent/skills/devops/`)
 
 | Skill | What it does | When to load |
 |-------|--------------|--------------|
@@ -65,7 +65,7 @@ profile needs them.
 
 ## External tools (called from terminal toolset)
 
-These are **not** Hermes skills but external CLIs / APIs that profiles invoke.
+These are **not** Athena skills but external CLIs / APIs that profiles invoke.
 They don't appear in `always_load`; instead the role's terminal commands hit
 them directly.
 
@@ -82,9 +82,9 @@ them directly.
 | Manim CE (`manim`) | Math animation render (driven by `manim-video` skill's recipes) | renderer-manim |
 | Blender (`blender -b`) | 3D rendering (alternative to `blender-mcp`) | renderer-3d |
 
-## Built-in Hermes tools for media review
+## Built-in Athena tools for media review
 
-These are native Hermes tools — not invoked via terminal but through their own
+These are native Athena tools — not invoked via terminal but through their own
 toolsets. Enable them per-profile by adding the toolset to the profile config.
 
 | Tool | Toolset | What it does | Profile that uses it |
@@ -284,7 +284,7 @@ skills:
 ## API key requirements
 
 Track these in the project setup. The setup script should verify each required
-key is present in `${HERMES_HOME:-~/.hermes}/.env` (or macOS Keychain) before firing the kanban.
+key is present in `${CORTEX_HOME:-~/.hermes}/.env` (or macOS Keychain) before firing the kanban.
 
 | Service | Env var | Used by |
 |---------|---------|---------|
@@ -298,10 +298,10 @@ key is present in `${HERMES_HOME:-~/.hermes}/.env` (or macOS Keychain) before fi
 | Luma | `LUMA_API_KEY` | image-to-video-generator (alternate) |
 | Suno | `SUNO_API_KEY` | music-supervisor (paired with `songwriting-and-ai-music`) |
 | Spotify | `SPOTIFY_CLIENT_ID` + `SPOTIFY_CLIENT_SECRET` | music-supervisor (paired with `spotify` skill) |
-| Anthropic | `ANTHROPIC_API_KEY` | every Hermes profile (Claude) |
+| Anthropic | `ANTHROPIC_API_KEY` | every Athena profile (Claude) |
 
 If a key is missing, prompt the user to add it. Storage methods, in order of
-preference: macOS Keychain → `${HERMES_HOME:-~/.hermes}/.env` → environment variable.
+preference: macOS Keychain → `${CORTEX_HOME:-~/.hermes}/.env` → environment variable.
 
 ## Skill version pinning
 
@@ -310,7 +310,7 @@ If a specific skill version is desired, pass it via the per-task
 
 ## Adding a new skill to the matrix
 
-When a new Hermes-public video skill ships:
+When a new Athena-public video skill ships:
 
 1. Add a row to the relevant table at the top of this file
 2. If it warrants a specialized renderer variant, add to `role-archetypes.md`

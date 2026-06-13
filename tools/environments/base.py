@@ -1,4 +1,4 @@
-"""Base class for all Hermes execution environment backends.
+"""Base class for all Athena execution environment backends.
 
 Unified spawn-per-call model: every command spawns a fresh ``bash -c`` process.
 A session snapshot (env vars, functions, aliases) is captured once at init and
@@ -20,7 +20,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import IO, Callable, Protocol
 
-from hermes_constants import get_hermes_home
+from cortex_constants import get_cortex_home
 from tools.interrupt import is_interrupted
 
 logger = logging.getLogger(__name__)
@@ -82,13 +82,13 @@ def get_sandbox_dir() -> Path:
     """Return the host-side root for all sandbox storage (Docker workspaces,
     Singularity overlays/SIF cache, etc.).
 
-    Configurable via TERMINAL_SANDBOX_DIR. Defaults to {HERMES_HOME}/sandboxes/.
+    Configurable via TERMINAL_SANDBOX_DIR. Defaults to {CORTEX_HOME}/sandboxes/.
     """
     custom = os.getenv("TERMINAL_SANDBOX_DIR")
     if custom:
         p = Path(custom)
     else:
-        p = get_hermes_home() / "sandboxes"
+        p = get_cortex_home() / "sandboxes"
     p.mkdir(parents=True, exist_ok=True)
     return p
 
@@ -286,7 +286,7 @@ def _cwd_marker(session_id: str) -> str:
 
 
 class BaseEnvironment(ABC):
-    """Common interface and unified execution flow for all Hermes backends.
+    """Common interface and unified execution flow for all Athena backends.
 
     Subclasses implement ``_run_bash()`` and ``cleanup()``.  The base class
     provides ``execute()`` with session snapshot sourcing, CWD tracking,

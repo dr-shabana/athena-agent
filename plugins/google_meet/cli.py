@@ -1,6 +1,6 @@
 """CLI commands for the google_meet plugin.
 
-Wires ``hermes meet <subcommand>``:
+Wires ``athena meet <subcommand>``:
   setup       — preflight playwright, chromium, auth file, print fixes
   auth        — open a browser to sign into Google, save storage state
   join <url>  — join a Meet URL synchronously (also callable from the agent)
@@ -17,14 +17,14 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-from hermes_constants import get_hermes_home
+from cortex_constants import get_cortex_home
 
 from plugins.google_meet import process_manager as pm
 from plugins.google_meet.meet_bot import _is_safe_meet_url
 
 
 def _auth_state_path() -> Path:
-    return Path(get_hermes_home()) / "workspace" / "meetings" / "auth.json"
+    return Path(get_cortex_home()) / "workspace" / "meetings" / "auth.json"
 
 
 # ---------------------------------------------------------------------------
@@ -32,7 +32,7 @@ def _auth_state_path() -> Path:
 # ---------------------------------------------------------------------------
 
 def register_cli(subparser: argparse.ArgumentParser) -> None:
-    """Build the ``hermes meet`` argparse tree.
+    """Build the ``athena meet`` argparse tree.
 
     Called by :func:`_register_cli_commands` at plugin load time.
     """
@@ -57,7 +57,7 @@ def register_cli(subparser: argparse.ArgumentParser) -> None:
 
     join_p = subs.add_parser("join", help="Join a Meet URL")
     join_p.add_argument("url", help="https://meet.google.com/...")
-    join_p.add_argument("--guest-name", default="Hermes Agent")
+    join_p.add_argument("--guest-name", default="Athena Agent")
     join_p.add_argument("--duration", default=None, help="e.g. 30m, 2h, 90s")
     join_p.add_argument("--headed", action="store_true", help="show browser")
     join_p.add_argument(
@@ -196,7 +196,7 @@ def _cmd_setup() -> int:
     auth_ok = auth_path.is_file()
     print(
         "  google auth    : "
-        + (f"ok ({auth_path})" if auth_ok else "not saved — run: hermes meet auth")
+        + (f"ok ({auth_path})" if auth_ok else "not saved — run: athena meet auth")
     )
 
     print()
@@ -364,7 +364,7 @@ def _cmd_auth() -> int:
     except Exception as e:
         print(f"auth failed: {e}")
         return 1
-    print("saved. you can now run: hermes meet join <url>")
+    print("saved. you can now run: athena meet join <url>")
     return 0
 
 

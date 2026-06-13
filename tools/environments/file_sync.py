@@ -25,7 +25,7 @@ except ImportError:
 from pathlib import Path
 from typing import Callable
 
-from hermes_constants import get_hermes_home
+from cortex_constants import get_cortex_home
 from tools.environments.base import _file_mtime_key
 
 logger = logging.getLogger(__name__)
@@ -214,7 +214,7 @@ class FileSyncManager:
     # Sync-back: pull remote changes to host on teardown
     # ------------------------------------------------------------------
 
-    def sync_back(self, hermes_home: Path | None = None) -> None:
+    def sync_back(self, cortex_home: Path | None = None) -> None:
         """Pull remote changes back to the host filesystem.
 
         Downloads the remote ``.hermes/`` directory as a tar archive,
@@ -234,7 +234,7 @@ class FileSyncManager:
             logger.debug("sync_back: no prior push state — skipping")
             return
 
-        lock_path = (hermes_home or get_hermes_home()) / ".sync.lock"
+        lock_path = (cortex_home or get_cortex_home()) / ".sync.lock"
         lock_path.parent.mkdir(parents=True, exist_ok=True)
 
         last_exc: Exception | None = None
@@ -390,8 +390,8 @@ class FileSyncManager:
         Uses the existing file mapping to find a remote->host directory
         pair, then applies the same prefix substitution to the new file.
         For example, if the mapping has ``/root/.hermes/skills/a.md`` →
-        ``~/.hermes/skills/a.md``, a new remote file at
-        ``/root/.hermes/skills/b.md`` maps to ``~/.hermes/skills/b.md``.
+        ``~/.cortex/skills/a.md``, a new remote file at
+        ``/root/.hermes/skills/b.md`` maps to ``~/.cortex/skills/b.md``.
         """
         mapping = file_mapping if file_mapping is not None else []
         for host, remote in mapping:

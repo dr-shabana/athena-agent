@@ -4,11 +4,11 @@ sidebar_position: 9
 
 # 添加平台适配器
 
-本指南介绍如何向 Hermes gateway 添加新的消息平台。平台适配器将 Hermes 连接到外部消息服务（Telegram、Discord、WeCom 等），使用户可以通过该服务与 agent 交互。
+本指南介绍如何向 Athena gateway 添加新的消息平台。平台适配器将 Athena 连接到外部消息服务（Telegram、Discord、WeCom 等），使用户可以通过该服务与 agent 交互。
 
 :::tip
 添加平台有两种方式：
-- **Plugin**（推荐用于社区/第三方）：将 plugin 目录放入 `~/.hermes/plugins/` — 无需修改任何核心代码。参见下方 [Plugin 路径](#plugin-path-recommended)。
+- **Plugin**（推荐用于社区/第三方）：将 plugin 目录放入 `~/.cortex/plugins/` — 无需修改任何核心代码。参见下方 [Plugin 路径](#plugin-path-recommended)。
 - **内置**：需修改代码、配置和文档共 20+ 个文件。参见下方 [内置清单](#step-by-step-checklist)。
 :::
 
@@ -30,10 +30,10 @@ sidebar_position: 9
 
 ## Plugin 路径（推荐）{#plugin-path-recommended}
 
-Plugin 系统允许你在不修改任何 Hermes 核心代码的情况下添加平台适配器。你的 plugin 是一个包含两个文件的目录：
+Plugin 系统允许你在不修改任何 Athena 核心代码的情况下添加平台适配器。你的 plugin 是一个包含两个文件的目录：
 
 ```
-~/.hermes/plugins/my-platform/
+~/.cortex/plugins/my-platform/
   plugin.yaml      # Plugin 元数据
   adapter.py       # 适配器类 + register() 入口点
 ```
@@ -115,7 +115,7 @@ def _env_enablement() -> dict | None:
 
 
 def register(ctx):
-    """Plugin 入口点 — 由 Hermes plugin 系统调用。"""
+    """Plugin 入口点 — 由 Athena plugin 系统调用。"""
     ctx.register_platform(
         name="my_platform",
         label="My Platform",
@@ -198,7 +198,7 @@ gateway:
 
 ## 环境变量驱动的自动配置
 
-大多数用户通过将环境变量写入 `~/.hermes/.env` 来配置平台，而不是编辑 `config.yaml`。`env_enablement_fn` hook 允许你的 plugin 在适配器构建**之前**读取这些环境变量，使 `hermes gateway status`、`get_connected_platforms()` 和 cron 投递无需实例化平台 SDK 即可看到正确状态。
+大多数用户通过将环境变量写入 `~/.cortex/.env` 来配置平台，而不是编辑 `config.yaml`。`env_enablement_fn` hook 允许你的 plugin 在适配器构建**之前**读取这些环境变量，使 `hermes gateway status`、`get_connected_platforms()` 和 cron 投递无需实例化平台 SDK 即可看到正确状态。
 
 ```python
 def _env_enablement() -> dict | None:
@@ -333,7 +333,7 @@ label: My Platform
 kind: platform
 version: 1.0.0
 description: >
-  My Platform gateway adapter for Hermes Agent.
+  My Platform gateway adapter for Athena Agent.
 author: Your Name
 requires_env:
   - name: MY_PLATFORM_TOKEN
@@ -457,7 +457,7 @@ LINE 两者都支持：阈值默认为 45 秒用于免费 postback 获取，`LIN
 ## 分步清单（内置路径）{#step-by-step-checklist}
 
 :::note
-此清单用于将平台直接添加到 Hermes 核心代码库 — 通常由核心贡献者为官方支持的平台执行。社区/第三方平台应使用上方的 [Plugin 路径](#plugin-path-recommended)。
+此清单用于将平台直接添加到 Athena 核心代码库 — 通常由核心贡献者为官方支持的平台执行。社区/第三方平台应使用上方的 [Plugin 路径](#plugin-path-recommended)。
 :::
 
 ### 1. Platform 枚举

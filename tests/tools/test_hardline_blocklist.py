@@ -157,7 +157,7 @@ def test_hardline_detection_allows(command):
 @pytest.fixture
 def clean_session(monkeypatch):
     """Reset session-scoped approval state around each test."""
-    monkeypatch.delenv("HERMES_YOLO_MODE", raising=False)
+    monkeypatch.delenv("CORTEX_YOLO_MODE", raising=False)
     monkeypatch.delenv("HERMES_INTERACTIVE", raising=False)
     monkeypatch.delenv("HERMES_GATEWAY_SESSION", raising=False)
     monkeypatch.delenv("HERMES_CRON_SESSION", raising=False)
@@ -186,8 +186,8 @@ def test_check_all_command_guards_blocks_hardline(clean_session):
 
 
 def test_yolo_env_var_cannot_bypass_hardline(clean_session, monkeypatch):
-    """HERMES_YOLO_MODE=1 must not bypass the hardline floor."""
-    monkeypatch.setenv("HERMES_YOLO_MODE", "1")
+    """CORTEX_YOLO_MODE=1 must not bypass the hardline floor."""
+    monkeypatch.setenv("CORTEX_YOLO_MODE", "1")
 
     for cmd in ["rm -rf /", "shutdown -h now", "mkfs.ext4 /dev/sda", "reboot"]:
         r1 = check_dangerous_command(cmd, "local")
@@ -261,7 +261,7 @@ def test_recoverable_dangerous_commands_still_pass_yolo(clean_session, monkeypat
 
     This confirms we haven't broken the yolo escape hatch — only narrowed it.
     """
-    monkeypatch.setenv("HERMES_YOLO_MODE", "1")
+    monkeypatch.setenv("CORTEX_YOLO_MODE", "1")
 
     # These are dangerous but NOT hardline — yolo should still pass them.
     for cmd in ["rm -rf /tmp/x", "chmod -R 777 .", "git reset --hard", "git push --force"]:
@@ -361,7 +361,7 @@ def test_sudo_stdin_guard_blocks_via_check_all_command_guards(clean_session):
 
 def test_sudo_stdin_guard_not_blocked_by_yolo(clean_session, monkeypatch):
     """yolo/approvals.mode=off must NOT bypass sudo stdin guard."""
-    monkeypatch.setenv("HERMES_YOLO_MODE", "1")
+    monkeypatch.setenv("CORTEX_YOLO_MODE", "1")
 
     for cmd in _SUDO_STDIN_BLOCK_YOLO:
         result = check_all_command_guards(cmd, "local")

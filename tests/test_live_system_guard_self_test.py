@@ -182,7 +182,7 @@ def test_asyncio_create_subprocess_shell_systemctl_blocked():
 
 def test_subprocess_pkill_hermes_blocked():
     with pytest.raises(RuntimeError, match="live-system guard"):
-        subprocess.run(["pkill", "-f", "hermes"])
+        subprocess.run(["pkill", "-f", "athena"])
 
 
 def test_subprocess_pkill_hermes_gateway_blocked():
@@ -191,14 +191,14 @@ def test_subprocess_pkill_hermes_gateway_blocked():
 
 
 def test_subprocess_pkill_python_dash_f_blocked():
-    """``pkill -f python`` matches the gateway's "python -m hermes_cli.main"."""
+    """``pkill -f python`` matches the gateway's "python -m cortex_cli.main"."""
     with pytest.raises(RuntimeError, match="live-system guard"):
         subprocess.run(["pkill", "-f", "python"])
 
 
 def test_subprocess_killall_hermes_blocked():
     with pytest.raises(RuntimeError, match="live-system guard"):
-        subprocess.run(["killall", "hermes"])
+        subprocess.run(["killall", "athena"])
 
 
 # ──────────────────── pass-through cases (must NOT raise) ──────

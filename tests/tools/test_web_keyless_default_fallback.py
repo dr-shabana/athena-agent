@@ -4,7 +4,7 @@
 zero setup via the bundled keyless Parallel free-MCP backend. That guarantee
 only holds if the bundled ``plugins/web/*`` providers are registered in
 ``agent.web_search_registry``. The dispatch triggers the general plugin sweep
-(:func:`hermes_cli.plugins._ensure_plugins_discovered`) to do that — but the
+(:func:`cortex_cli.plugins._ensure_plugins_discovered`) to do that — but the
 sweep can finish without registering them (its exception swallowed as a
 warning, a packaged layout where it ran before the bundled tree was
 importable, or a stale empty-discovery cache). When that happened, *both*
@@ -21,7 +21,7 @@ from __future__ import annotations
 import pytest
 
 import agent.web_search_registry as reg
-import hermes_cli.plugins as plugins
+import cortex_cli.plugins as plugins
 from tools import web_tools
 
 

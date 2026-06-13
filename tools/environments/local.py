@@ -12,7 +12,7 @@ import time
 from pathlib import Path
 
 from tools.environments.base import BaseEnvironment, _pipe_stdin
-from hermes_cli._subprocess_compat import windows_hide_flags
+from cortex_cli._subprocess_compat import windows_hide_flags
 
 _IS_WINDOWS = platform.system() == "Windows"
 
@@ -72,12 +72,12 @@ def _resolve_safe_cwd(cwd: str) -> str:
     return tempfile.gettempdir()
 
 
-# Hermes-internal env vars that should NOT leak into terminal subprocesses.
+# Athena-internal env vars that should NOT leak into terminal subprocesses.
 _HERMES_PROVIDER_ENV_FORCE_PREFIX = "_HERMES_FORCE_"
 
-# Hermes-managed AWS *inference* credentials for ``auth_type="aws_sdk"``
+# Athena-managed AWS *inference* credentials for ``auth_type="aws_sdk"``
 # providers (Bedrock).  Scoped DELIBERATELY NARROW: this lists only the
-# Bedrock-specific bearer token, which is a Hermes inference secret exactly
+# Bedrock-specific bearer token, which is a Athena inference secret exactly
 # analogous to ``OPENAI_API_KEY`` — nobody drives the ``aws``/``terraform``/
 # ``boto3`` toolchain off it, so stripping it from terminal/execute_code
 # subprocesses costs no user capability.
@@ -102,7 +102,7 @@ def _build_provider_env_blocklist() -> frozenset:
     blocked: set[str] = set()
 
     try:
-        from hermes_cli.auth import PROVIDER_REGISTRY
+        from cortex_cli.auth import PROVIDER_REGISTRY
         for pconfig in PROVIDER_REGISTRY.values():
             blocked.update(pconfig.api_key_env_vars)
             if pconfig.auth_type == "aws_sdk":
@@ -113,7 +113,7 @@ def _build_provider_env_blocklist() -> frozenset:
         pass
 
     try:
-        from hermes_cli.config import OPTIONAL_ENV_VARS
+        from cortex_cli.config import OPTIONAL_ENV_VARS
         for name, metadata in OPTIONAL_ENV_VARS.items():
             category = metadata.get("category")
             if category in {"tool", "messaging"}:
@@ -191,20 +191,20 @@ def _build_provider_env_blocklist() -> frozenset:
 _HERMES_PROVIDER_ENV_BLOCKLIST = _build_provider_env_blocklist()
 
 
-def _inject_context_hermes_home(env: dict) -> None:
-    """Bridge the context-local Hermes home override into subprocess env."""
+def _inject_context_cortex_home(env: dict) -> None:
+    """Bridge the context-local Athena home override into subprocess env."""
     try:
-        from hermes_constants import get_hermes_home_override
+        from cortex_constants import get_cortex_home_override
 
-        value = get_hermes_home_override()
+        value = get_cortex_home_override()
         if value:
-            env["HERMES_HOME"] = value
+            env["CORTEX_HOME"] = value
     except Exception:
         pass
 
 
 def _sanitize_subprocess_env(base_env: dict | None, extra_env: dict | None = None) -> dict:
-    """Filter Hermes-managed secrets from a subprocess environment."""
+    """Filter Athena-managed secrets from a subprocess environment."""
     try:
         from tools.env_passthrough import is_env_passthrough as _is_passthrough
     except Exception:
@@ -225,10 +225,10 @@ def _sanitize_subprocess_env(base_env: dict | None, extra_env: dict | None = Non
         elif key not in _HERMES_PROVIDER_ENV_BLOCKLIST or _is_passthrough(key):
             sanitized[key] = value
 
-    _inject_context_hermes_home(sanitized)
+    _inject_context_cortex_home(sanitized)
 
     # Per-profile HOME isolation for background processes (same as _make_run_env).
-    from hermes_constants import get_subprocess_home
+    from cortex_constants import get_subprocess_home
     _profile_home = get_subprocess_home()
     if _profile_home:
         sanitized["HOME"] = _profile_home
@@ -261,7 +261,7 @@ def _find_bash() -> str:
     #   PortableGit: %LOCALAPPDATA%\hermes\git\bin\bash.exe   (primary)
     #   MinGit:      %LOCALAPPDATA%\hermes\git\usr\bin\bash.exe (legacy/32-bit fallback)
     _local_appdata = os.environ.get("LOCALAPPDATA", "")
-    _hermes_portable_git = os.path.join(_local_appdata, "hermes", "git") if _local_appdata else ""
+    _hermes_portable_git = os.path.join(_local_appdata, "athena", "git") if _local_appdata else ""
     if _hermes_portable_git:
         for candidate in (
             os.path.join(_hermes_portable_git, "bin", "bash.exe"),        # PortableGit (primary)
@@ -283,7 +283,7 @@ def _find_bash() -> str:
             return candidate
 
     raise RuntimeError(
-        "Git Bash not found. Hermes Agent requires Git for Windows on Windows.\n"
+        "Git Bash not found. Athena Agent requires Git for Windows on Windows.\n"
         "Install it from: https://git-scm.com/download/win\n"
         "Or set HERMES_GIT_BASH_PATH to your bash.exe location."
     )
@@ -385,12 +385,12 @@ def _make_run_env(env: dict) -> dict:
     if path_key is not None:
         run_env[path_key] = _append_missing_sane_path_entries(run_env.get(path_key, ""))
 
-    _inject_context_hermes_home(run_env)
+    _inject_context_cortex_home(run_env)
 
     # Per-profile HOME isolation: redirect system tool configs (git, ssh, gh,
-    # npm …) into {HERMES_HOME}/home/ when that directory exists.  Only the
+    # npm …) into {CORTEX_HOME}/home/ when that directory exists.  Only the
     # subprocess sees the override — the Python process keeps the real HOME.
-    from hermes_constants import get_subprocess_home
+    from cortex_constants import get_subprocess_home
     _profile_home = get_subprocess_home()
     if _profile_home:
         run_env["HOME"] = _profile_home
@@ -416,7 +416,7 @@ def _read_terminal_shell_init_config() -> tuple[list[str], bool]:
     execution never breaks because the config file is unreadable.
     """
     try:
-        from hermes_cli.config import load_config
+        from cortex_cli.config import load_config
 
         cfg = load_config() or {}
         terminal_cfg = cfg.get("terminal") or {}
@@ -435,7 +435,7 @@ def _resolve_shell_init_files() -> list[str]:
     Expands ``~`` and ``${VAR}`` references and drops anything that doesn't
     exist on disk, so a missing ``~/.bashrc`` never breaks the snapshot.
     The ``auto_source_bashrc`` path runs only when the user hasn't supplied
-    an explicit list — once they have, Hermes trusts them.
+    an explicit list — once they have, Athena trusts them.
     """
     explicit, auto_bashrc = _read_terminal_shell_init_config()
 
@@ -522,18 +522,18 @@ class LocalEnvironment(BaseEnvironment):
         can't open the path, and the Windows default temp (``%TEMP%``) often
         contains spaces (``C:\\Users\\Some Name\\AppData\\Local\\Temp``) that
         break unquoted bash interpolations.  Use a dedicated cache dir under
-        ``HERMES_HOME`` instead — single-word path, guaranteed to exist, same
+        ``CORTEX_HOME`` instead — single-word path, guaranteed to exist, same
         string resolves in both Git Bash and native Python.
         """
         if _IS_WINDOWS:
-            # Derive a Windows-safe temp dir under HERMES_HOME.  Using
+            # Derive a Windows-safe temp dir under CORTEX_HOME.  Using
             # forward slashes makes the same string work unchanged in bash
             # command interpolations AND in Python ``open()`` — Windows
             # accepts forward slashes in filesystem paths, and we control
             # the path so we can guarantee no spaces.
             try:
-                from hermes_constants import get_hermes_home
-                cache_dir = get_hermes_home() / "cache" / "terminal"
+                from cortex_constants import get_cortex_home
+                cache_dir = get_cortex_home() / "cache" / "terminal"
             except Exception:
                 cache_dir = Path(tempfile.gettempdir()) / "hermes_terminal"
             cache_dir.mkdir(parents=True, exist_ok=True)

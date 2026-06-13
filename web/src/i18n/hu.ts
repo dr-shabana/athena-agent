@@ -50,7 +50,7 @@ export const hu: Translations = {
   },
 
   app: {
-    brand: "Hermes Agent",
+    brand: "Athena Agent",
     brandShort: "HA",
     closeNavigation: "Navigáció bezárása",
     closeModelTools: "Modell és eszközök bezárása",
@@ -336,8 +336,8 @@ export const hu: Translations = {
     providersHint:
       "A memory.provider (üres = beépített) és a context.engine értékét írja a config.yaml fájlba. A következő munkamenetben lép életbe.",
     refreshDashboard: "Vezérlőpult-bővítmények újraolvasása",
-    removeConfirm: "Eltávolítja ezt a bővítményt a ~/.hermes/plugins/ mappából?",
-    removeHint: "Csak a felhasználó által a ~/.hermes/plugins alá telepített bővítmények távolíthatók el.",
+    removeConfirm: "Eltávolítja ezt a bővítményt a ~/.cortex/plugins/ mappából?",
+    removeHint: "Csak a felhasználó által a ~/.cortex/plugins alá telepített bővítmények távolíthatók el.",
     rescanHeading: "SPA-bővítményregiszter",
     rescanHint: "Olvassa újra a fájlokat a lemezen történő hozzáadás után, hogy az oldalsáv felvegye az új manifesteket.",
     runtimeHeading: "Átjáró-futási idő (YAML-bővítmények)",
@@ -359,7 +359,7 @@ export const hu: Translations = {
     all: "Összes",
     categories: "Kategóriák",
     filters: "Szűrők",
-    noSkills: "Nem található készség. A készségek a ~/.hermes/skills/ mappából töltődnek be",
+    noSkills: "Nem található készség. A készségek a ~/.cortex/skills/ mappából töltődnek be",
     noSkillsMatch: "Nincs a keresésnek vagy szűrőnek megfelelő készség.",
     skillCount: "{count} készség{s}",
     resultCount: "{count} találat{s}",
@@ -373,7 +373,7 @@ export const hu: Translations = {
   },
 
   config: {
-    configPath: "~/.hermes/config.yaml",
+    configPath: "~/.cortex/config.yaml",
     filters: "Szűrők",
     sections: "Szakaszok",
     exportConfig: "Konfiguráció exportálása JSON-ba",
@@ -585,7 +585,7 @@ export const hu: Translations = {
         "A „Megosztás az X-en” új lapon nyit meg egy előre kitöltött bejegyzést. Először kattints a „Kép másolása” gombra, ha az 1200×630-as jelvényt is csatolnád — az X engedi, hogy közvetlenül beillesszd a bejegyzésszerkesztőbe. A „PNG letöltése” bárhol felhasználható fájlként menti.",
       clipboard_unsupported:
         "A kép vágólapra másolása nem támogatott ebben a böngészőben — használd inkább a Letöltést.",
-      tweet_text: "Just unlocked {tier_part}\"{name}\" in Hermes Agent ☤",
+      tweet_text: "Just unlocked {tier_part}\"{name}\" in Athena Agent ☤",
     },
   },
   kanban: {

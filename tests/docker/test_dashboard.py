@@ -6,7 +6,7 @@ it is restarted under supervision. The restart-after-crash test lives in
 Phase 2 Task 2.5; this file only locks the opt-in surface (which must
 not change between tini and s6).
 
-Every ``docker exec`` here runs as the unprivileged ``hermes`` user
+Every ``docker exec`` here runs as the unprivileged ``athena`` user
 (via :func:`docker_exec`/:func:`docker_exec_sh` in conftest), matching
 the realistic runtime context. See the conftest module docstring.
 """

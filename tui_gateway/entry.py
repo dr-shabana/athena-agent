@@ -2,7 +2,7 @@ import os
 import sys
 
 # Guard against a local utils/ (or other package) in CWD shadowing installed
-# hermes modules.  hermes_cli sets HERMES_PYTHON_SRC_ROOT before spawning this
+# hermes modules.  cortex_cli sets HERMES_PYTHON_SRC_ROOT before spawning this
 # subprocess; inserting it first ensures the installed packages win.
 _src_root = os.environ.get("HERMES_PYTHON_SRC_ROOT", "")
 if _src_root and _src_root not in sys.path:
@@ -154,7 +154,7 @@ def _log_signal(signum: int, frame) -> None:
 #
 # SIGPIPE and SIGHUP don't exist on Windows; guard each installation
 # with hasattr so ``python -m tui_gateway.entry`` (spawned by
-# ``hermes --tui``) imports cleanly there.  SIGBREAK (Windows' Ctrl+Break)
+# ``athena --tui``) imports cleanly there.  SIGBREAK (Windows' Ctrl+Break)
 # is installed when available as a weaker equivalent of SIGHUP.
 if hasattr(signal, "SIGPIPE"):
     signal.signal(signal.SIGPIPE, signal.SIG_IGN)
@@ -234,7 +234,7 @@ def main():
     # thread when there's actually MCP work to do, so the import cost stays
     # off the path entirely for the common case.
     try:
-        from hermes_cli.config import read_raw_config
+        from cortex_cli.config import read_raw_config
         _mcp_servers = (read_raw_config() or {}).get("mcp_servers")
         _has_mcp_servers = isinstance(_mcp_servers, dict) and len(_mcp_servers) > 0
     except Exception:

@@ -1,7 +1,7 @@
 # Kanban Setup — Project Bootstrap & Profile Configuration
 
 Once the brief is locked and the team is designed, the next step is producing
-the actual `setup.sh` that creates the project workspace, configures Hermes
+the actual `setup.sh` that creates the project workspace, configures Athena
 profiles, and fires the initial kanban task.
 
 This file documents the patterns. The companion script
@@ -11,7 +11,7 @@ JSON.
 > **Credit:** the single-project-workspace layout, profile-config patching
 > approach, SOUL.md-per-profile convention, and `--workspace dir:<path>` rule
 > are adapted from alt-glitch's original multi-agent video pipeline:
-> [NousResearch/kanban-video-pipeline](https://github.com/NousResearch/kanban-video-pipeline).
+> [dr-shabana/kanban-video-pipeline](https://github.com/dr-shabana/kanban-video-pipeline).
 > This skill generalizes those patterns across video styles and replaces the
 > string-replacement config patcher with a PyYAML-based one.
 
@@ -62,7 +62,7 @@ The setup script does six things in order:
 1. **Create workspace tree** — all directories above
 2. **Create profiles** — `hermes profile create <name> --clone`
 3. **Configure profiles** — patch each profile's
-   `~/.hermes/profiles/<name>/config.yaml` to set toolsets, always_load skills,
+   `~/.cortex/profiles/<name>/config.yaml` to set toolsets, always_load skills,
    and `cwd`
 4. **Write SOUL.md per profile** — the personality + role definition
 5. **Copy any provided assets + write `brief.md`, `TEAM.md`, and `taste/`**
@@ -82,7 +82,7 @@ the profile already exists.
 
 ### Profile config patching
 
-Each profile has a YAML config at `~/.hermes/profiles/<name>/config.yaml`. The
+Each profile has a YAML config at `~/.cortex/profiles/<name>/config.yaml`. The
 setup script edits exactly two keys:
 
 1. `toolsets:` — replace the default with the role's required toolsets
@@ -105,7 +105,7 @@ configure_profile() {
     python3 - "$profile" "$toolsets_json" "$skills_json" <<'PY'
 import json, os, sys, yaml
 profile, ts_json, sk_json = sys.argv[1:4]
-p = os.path.expanduser(f"~/.hermes/profiles/{profile}/config.yaml")
+p = os.path.expanduser(f"~/.cortex/profiles/{profile}/config.yaml")
 with open(p) as f:
     cfg = yaml.safe_load(f) or {}
 cfg["toolsets"] = json.loads(ts_json)
@@ -116,7 +116,7 @@ PY
 }
 ```
 
-PyYAML must be installed in the user's Python (it ships with most Hermes
+PyYAML must be installed in the user's Python (it ships with most Athena
 installs). If absent: `pip install pyyaml`.
 
 The setup script should also **validate** the patch by re-reading the file
@@ -124,7 +124,7 @@ and comparing — see `assets/setup.sh.tmpl` for the validation pattern.
 
 ### SOUL.md per profile
 
-Each profile gets a `SOUL.md` at `~/.hermes/profiles/<name>/SOUL.md` that
+Each profile gets a `SOUL.md` at `~/.cortex/profiles/<name>/SOUL.md` that
 defines its role, voice, and rules. See `assets/soul.md.tmpl` for the
 template. Customize per role and per project.
 
@@ -218,7 +218,7 @@ The director turns this into actual `kanban_create` calls.
 ## API-key prerequisites check
 
 Before firing the kanban, verify required keys are available. Check both
-the Hermes `.env` (`${HERMES_HOME:-$HOME/.hermes}/.env`) and macOS Keychain
+the Athena `.env` (`${CORTEX_HOME:-$HOME/.hermes}/.env`) and macOS Keychain
 (if on macOS):
 
 ```bash
@@ -226,7 +226,7 @@ check_key() {
     local var="$1"
     local kc_account="$2"
     local kc_service="$3"
-    local _hermes_env="${HERMES_HOME:-$HOME/.hermes}/.env"
+    local _hermes_env="${CORTEX_HOME:-$HOME/.hermes}/.env"
     if grep -q "^${var}=" "$_hermes_env" 2>/dev/null && \
        [ -n "$(grep "^${var}=" "$_hermes_env" | cut -d= -f2-)" ]; then
         return 0

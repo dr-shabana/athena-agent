@@ -1,14 +1,14 @@
 ---
 sidebar_position: 1
 title: "Messaging Gateway"
-description: "Chat with Hermes from Telegram, Discord, Slack, WhatsApp, Signal, SMS, Email, Home Assistant, Mattermost, Matrix, DingTalk, Yuanbao, Microsoft Teams, LINE, Webhooks, or any OpenAI-compatible frontend via the API server — architecture and setup overview"
+description: "Chat with Athena from Telegram, Discord, Slack, WhatsApp, Signal, SMS, Email, Home Assistant, Mattermost, Matrix, DingTalk, Yuanbao, Microsoft Teams, LINE, Webhooks, or any OpenAI-compatible frontend via the API server — architecture and setup overview"
 ---
 
 # Messaging Gateway
 
-Chat with Hermes from Telegram, Discord, Slack, WhatsApp, Signal, SMS, Email, Home Assistant, Mattermost, Matrix, DingTalk, Feishu/Lark, WeCom, Weixin, BlueBubbles (iMessage), QQ, Yuanbao, Microsoft Teams, LINE, ntfy, or your browser. The gateway is a single background process that connects to all your configured platforms, handles sessions, runs cron jobs, and delivers voice messages.
+Chat with Athena from Telegram, Discord, Slack, WhatsApp, Signal, SMS, Email, Home Assistant, Mattermost, Matrix, DingTalk, Feishu/Lark, WeCom, Weixin, BlueBubbles (iMessage), QQ, Yuanbao, Microsoft Teams, LINE, ntfy, or your browser. The gateway is a single background process that connects to all your configured platforms, handles sessions, runs cron jobs, and delivers voice messages.
 
-For the full voice feature set — including CLI microphone mode, spoken replies in messaging, and Discord voice-channel conversations — see [Voice Mode](/user-guide/features/voice-mode) and [Use Voice Mode with Hermes](/guides/use-voice-mode-with-hermes).
+For the full voice feature set — including CLI microphone mode, spoken replies in messaging, and Discord voice-channel conversations — see [Voice Mode](/user-guide/features/voice-mode) and [Use Voice Mode with Athena](/guides/use-voice-mode-with-hermes).
 
 :::tip
 Bots need both a model provider and tool providers (TTS, web). A [Nous Portal](/integrations/nous-portal) subscription bundles all of them.
@@ -47,7 +47,7 @@ Bots need both a model provider and tool providers (TTS, web). A [Nous Portal](/
 
 ```mermaid
 flowchart TB
-    subgraph Gateway["Hermes Gateway"]
+    subgraph Gateway["Athena Gateway"]
         subgraph Adapters["Platform adapters"]
             tg[Telegram]
             dc[Discord]
@@ -154,7 +154,7 @@ hermes gateway status --system         # Linux only: inspect the system service 
 | `/rollback [number]` | List or restore filesystem checkpoints |
 | `/background <prompt>` | Run a prompt in a separate background session |
 | `/reload-mcp` | Reload MCP servers from config |
-| `/update` | Update Hermes Agent to the latest version |
+| `/update` | Update Athena Agent to the latest version |
 | `/help` | Show available commands |
 | `/<skill-name>` | Invoke any installed skill |
 
@@ -174,7 +174,7 @@ Sessions reset based on configurable policies:
 | Idle | 1440 min | Reset after N minutes of inactivity |
 | Both | (combined) | Whichever triggers first |
 
-Configure per-platform overrides in `~/.hermes/gateway.json`:
+Configure per-platform overrides in `~/.cortex/gateway.json`:
 
 ```json
 {
@@ -285,13 +285,13 @@ display:
   busy_ack_enabled: true   # set to false to suppress the ⚡/⏳/⏩ chat reply entirely
 ```
 
-The first time you message a busy agent on any platform, Hermes appends a one-line reminder to the busy-ack explaining the knob (`"💡 First-time tip — …"`). The reminder fires once per install — a flag under `onboarding.seen.busy_input_prompt` latches it. Delete that key to see the tip again.
+The first time you message a busy agent on any platform, Athena appends a one-line reminder to the busy-ack explaining the knob (`"💡 First-time tip — …"`). The reminder fires once per install — a flag under `onboarding.seen.busy_input_prompt` latches it. Delete that key to see the tip again.
 
 If you find the busy-ack noisy — especially with voice input or rapid-fire messages — set `display.busy_ack_enabled: false`. Your input is still queued/steered/interrupts as normal, only the chat reply is silenced.
 
 ## Tool Progress Notifications
 
-Control how much tool activity is displayed in `~/.hermes/config.yaml`:
+Control how much tool activity is displayed in `~/.cortex/config.yaml`:
 
 ```yaml
 display:
@@ -316,7 +316,7 @@ Run a prompt in a separate background session so the agent works on it independe
 /background Check all servers in the cluster and report any that are down
 ```
 
-Hermes confirms immediately:
+Athena confirms immediately:
 
 ```
 🔄 Background task started: "Check all servers in the cluster..."
@@ -334,7 +334,7 @@ Each `/background` prompt spawns a **separate agent instance** that runs asynchr
 
 ### Background Process Notifications
 
-When the agent running a background session uses `terminal(background=true)` to start long-running processes (servers, builds, etc.), the gateway can push status updates to your chat. Control this with `display.background_process_notifications` in `~/.hermes/config.yaml`:
+When the agent running a background session uses `terminal(background=true)` to start long-running processes (servers, builds, etc.), the gateway can push status updates to your chat. Control this with `display.background_process_notifications` in `~/.cortex/config.yaml`:
 
 ```yaml
 display:
@@ -405,10 +405,10 @@ hermes ALL=(root) NOPASSWD: /usr/bin/systemctl --no-ask-password reset-failed he
 ```
 :::
 
-Avoid keeping both the user and system gateway units installed at once unless you really mean to. Hermes will warn if it detects both because start/stop/status behavior gets ambiguous.
+Avoid keeping both the user and system gateway units installed at once unless you really mean to. Athena will warn if it detects both because start/stop/status behavior gets ambiguous.
 
 :::info Multiple installations
-If you run multiple Hermes installations on the same machine (with different `HERMES_HOME` directories), each gets its own systemd service name. The default `~/.hermes` uses `hermes-gateway`; other installations use `hermes-gateway-<hash>`. The `hermes gateway` commands automatically target the correct service for your current `HERMES_HOME`.
+If you run multiple Athena installations on the same machine (with different `CORTEX_HOME` directories), each gets its own systemd service name. The default `~/.hermes` uses `hermes-gateway`; other installations use `hermes-gateway-<hash>`. The `hermes gateway` commands automatically target the correct service for your current `CORTEX_HOME`.
 :::
 
 ### macOS (launchd)
@@ -418,21 +418,21 @@ hermes gateway install               # Install as launchd agent
 hermes gateway start                 # Start the service
 hermes gateway stop                  # Stop the service
 hermes gateway status                # Check status
-tail -f ~/.hermes/logs/gateway.log   # View logs
+tail -f ~/.cortex/logs/gateway.log   # View logs
 ```
 
 The generated plist lives at `~/Library/LaunchAgents/ai.hermes.gateway.plist`. It includes three environment variables:
 
 - **PATH** — your full shell PATH at install time, with the venv `bin/` and `node_modules/.bin` prepended. This ensures user-installed tools (Node.js, ffmpeg, etc.) are available to gateway subprocesses like the WhatsApp bridge.
 - **VIRTUAL_ENV** — points to the Python virtualenv so tools can resolve packages correctly.
-- **HERMES_HOME** — scopes the gateway to your Hermes installation.
+- **CORTEX_HOME** — scopes the gateway to your Athena installation.
 
 :::tip PATH changes after install
 launchd plists are static — if you install new tools (e.g. a new Node.js version via nvm, or ffmpeg via Homebrew) after setting up the gateway, run `hermes gateway install` again to capture the updated PATH. The gateway will detect the stale plist and reload automatically.
 :::
 
 :::info Multiple installations
-Like the Linux systemd service, each `HERMES_HOME` directory gets its own launchd label. The default `~/.hermes` uses `ai.hermes.gateway`; other installations use `ai.hermes.gateway-<suffix>`.
+Like the Linux systemd service, each `CORTEX_HOME` directory gets its own launchd label. The default `~/.hermes` uses `ai.hermes.gateway`; other installations use `ai.hermes.gateway-<suffix>`.
 :::
 
 ## Platform-Specific Toolsets
@@ -494,7 +494,7 @@ The breaker does **not** auto-resume — it stays open until you run `/platform 
 
 When an adapter is paused, check:
 
-1. **Gateway log** (`~/.hermes/logs/gateway.log` or the systemd / launchd unit log). Search for the platform name and `circuit breaker`, `paused`, or `disabled`. The trip event includes the failure count and the last error.
+1. **Gateway log** (`~/.cortex/logs/gateway.log` or the systemd / launchd unit log). Search for the platform name and `circuit breaker`, `paused`, or `disabled`. The trip event includes the failure count and the last error.
 2. **`/platform list`** output — shows the current state and last reason.
 3. **The provider's status page** (Telegram bot API status, Discord status, etc.). The breaker tripped because the platform was unhealthy; don't try to resume until it's back.
 

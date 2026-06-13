@@ -15,7 +15,7 @@ frontmatter:
 Because a blueprint is just a skill, it flows through the ENTIRE existing
 skills-hub pipeline for free — search, inspect, quarantine, security scan,
 install, lock-file provenance, audit log, taps, the centralized index, and
-`hermes skills publish` for sharing. No new source type, no new store, no new
+`athena skills publish` for sharing. No new source type, no new store, no new
 transport. This module is the thin bridge between that skill metadata and the
 existing cron `create_job()` API:
 
@@ -106,7 +106,7 @@ def parse_blueprint(skill_md_text: str) -> Optional[BlueprintSpec]:
     name = str(fm.get("name", "")).strip()
 
     meta = fm.get("metadata")
-    hermes = meta.get("hermes") if isinstance(meta, dict) else None
+    hermes = meta.get("athena") if isinstance(meta, dict) else None
     blueprint = hermes.get("blueprint") if isinstance(hermes, dict) else None
     if blueprint is None:
         return None
@@ -248,7 +248,7 @@ def export_blueprint(job: Dict[str, Any], body: str, *, blueprint_name: Optional
 
     The inverse of ``create_blueprint_job``: take a cron job a user already built
     and emit a SKILL.md (with a ``metadata.hermes.blueprint`` block) they can hand
-    to ``hermes skills publish`` to share. ``body`` is the plain-language
+    to ``athena skills publish`` to share. ``body`` is the plain-language
     description / instructions that become the SKILL.md body.
     """
     import yaml
@@ -288,7 +288,7 @@ def export_blueprint(job: Dict[str, Any], body: str, *, blueprint_name: Optional
         "version": "1.0.0",
         "license": "MIT",
         "metadata": {
-            "hermes": {
+            "athena": {
                 "tags": ["blueprint", "automation"],
                 "blueprint": blueprint_block,
             }

@@ -50,7 +50,7 @@ export const ga: Translations = {
   },
 
   app: {
-    brand: "Hermes Agent",
+    brand: "Athena Agent",
     brandShort: "HA",
     closeNavigation: "Dún an nascleanúint",
     closeModelTools: "Dún an samhail agus na huirlisí",
@@ -344,8 +344,8 @@ export const ga: Translations = {
     providersHint:
       "Scríobhann memory.provider (folamh = ionsuite) agus context.engine chuig config.yaml. Beidh éifeacht aige sa chéad seisiún eile.",
     refreshDashboard: "Athscan síntí an dashboard",
-    removeConfirm: "Bain an plugin seo ó ~/.hermes/plugins/?",
-    removeHint: "Ní féidir ach plugins atá suiteáilte ag an úsáideoir faoi ~/.hermes/plugins a bhaint.",
+    removeConfirm: "Bain an plugin seo ó ~/.cortex/plugins/?",
+    removeHint: "Ní féidir ach plugins atá suiteáilte ag an úsáideoir faoi ~/.cortex/plugins a bhaint.",
     rescanHeading: "Clár plugin SPA",
     rescanHint: "Athscan tar éis comhaid a chur leis an diosca ionas go n-aimseoidh barra taoibh an dashboard manifests nua.",
     runtimeHeading: "Runtime gateway (plugins YAML)",
@@ -367,7 +367,7 @@ export const ga: Translations = {
     all: "Gach ceann",
     categories: "Catagóirí",
     filters: "Scagairí",
-    noSkills: "Níor aimsíodh scileanna. Luchtaítear scileanna ó ~/.hermes/skills/",
+    noSkills: "Níor aimsíodh scileanna. Luchtaítear scileanna ó ~/.cortex/skills/",
     noSkillsMatch: "Níl scil ar bith ag teacht le do chuardach nó scagaire.",
     skillCount: "{count} scil{s}",
     resultCount: "{count} torad{s}",
@@ -381,7 +381,7 @@ export const ga: Translations = {
   },
 
   config: {
-    configPath: "~/.hermes/config.yaml",
+    configPath: "~/.cortex/config.yaml",
     filters: "Scagairí",
     sections: "Ranna",
     exportConfig: "Easpórtáil cumraíocht mar JSON",
@@ -593,7 +593,7 @@ export const ga: Translations = {
         "Osclaíonn Comhroinn ar X post réamhlíonta i gcluaisín nua. Cliceáil Cóipeáil íomhá ar dtús más mian leat an suaitheantas 1200×630 a bheith ceangailte — ligeann X duit é a ghreamú díreach isteach i scríbhneoir an tweet. Sábhálann Íoslódáil PNG an comhad le húsáid áit ar bith.",
       clipboard_unsupported:
         "Ní thacaítear le cóipeáil íomhá chuig an ngearrthaisce sa bhrabhsálaí seo — úsáid Íoslódáil ina ionad sin.",
-      tweet_text: "Just unlocked {tier_part}\"{name}\" in Hermes Agent ☤",
+      tweet_text: "Just unlocked {tier_part}\"{name}\" in Athena Agent ☤",
     },
   },
   kanban: {

@@ -17,7 +17,7 @@
 
 set -eu
 
-HERMES_HOME="${HERMES_HOME:-/opt/data}"
+CORTEX_HOME="${CORTEX_HOME:-/opt/data}"
 INSTALL_DIR="/opt/hermes"
 
 # Drop to hermes via s6-setuidgid, but skip it when already non-root.
@@ -35,7 +35,7 @@ as_hermes() { [ "$(id -u)" = 0 ] || { "$@"; return; }; s6-setuidgid hermes "$@";
 # arbitrary `--user` UID can't write them — the runtime then fails with EACCES
 # on a bind mount, or hard-crashes on a named volume (Docker initialises the
 # volume from the image as UID 10000, and the non-root start can't even `cd`
-# into $HERMES_HOME). See #34837 for the supervision-tree side of this.
+# into $CORTEX_HOME). See #34837 for the supervision-tree side of this.
 #
 # The supported way to match host-side ownership is to start as root (the image
 # default) and pass HERMES_UID/HERMES_GID — or the PUID/PGID aliases — which the
@@ -73,17 +73,17 @@ EOF
     exit 1
 fi
 
-# --- Bootstrap HERMES_HOME as root ---
+# --- Bootstrap CORTEX_HOME as root ---
 # Create the directory (and any missing parents) while we still have root
 # privileges so the chown checks below see real metadata and the later
 # `s6-setuidgid hermes mkdir -p` block doesn't EACCES on root-owned
-# ancestors. Without this, custom HERMES_HOME paths whose parents only
-# root can create (e.g. `HERMES_HOME=/home/hermes/.hermes` in a Compose
+# ancestors. Without this, custom CORTEX_HOME paths whose parents only
+# root can create (e.g. `CORTEX_HOME=/home/hermes/.hermes` in a Compose
 # file, or any path under a fresh / not pre-populated by the image)
 # fail on first boot with `mkdir: cannot create directory '/...': Permission
 # denied` and the cont-init hook exits non-zero. Idempotent — `mkdir -p`
 # is a no-op if the dir already exists. (#18482, salvages #18488)
-mkdir -p "$HERMES_HOME"
+mkdir -p "$CORTEX_HOME"
 
 # Numeric UID/GID validation: must be digits only, non-root, 1-65534.
 # NAS hosts such as Unraid commonly use low non-root IDs (99:100).
@@ -172,9 +172,9 @@ for sock in /var/run/docker.sock /run/docker.sock; do
 done
 
 # --- Fix ownership of data volume ---
-# When HERMES_UID is remapped or the top-level $HERMES_HOME isn't owned by
+# When HERMES_UID is remapped or the top-level $CORTEX_HOME isn't owned by
 # the runtime hermes UID, restore ownership to hermes — but ONLY for the
-# directories hermes actually writes to. The full $HERMES_HOME may be a
+# directories hermes actually writes to. The full $CORTEX_HOME may be a
 # host-mounted bind containing unrelated user files; `chown -R` would
 # silently destroy host ownership of those (see issue #19788).
 #
@@ -182,27 +182,27 @@ done
 # mkdir -p block below seeds. Keep them in sync if the seed list changes.
 actual_hermes_uid=$(id -u hermes)
 needs_chown=false
-if [ "$(stat -c %u "$HERMES_HOME" 2>/dev/null)" != "$actual_hermes_uid" ]; then
+if [ "$(stat -c %u "$CORTEX_HOME" 2>/dev/null)" != "$actual_hermes_uid" ]; then
     needs_chown=true
 fi
 if [ "$needs_chown" = true ]; then
-    echo "[stage2] Fixing ownership of $HERMES_HOME (targeted) to hermes ($actual_hermes_uid)"
+    echo "[stage2] Fixing ownership of $CORTEX_HOME (targeted) to hermes ($actual_hermes_uid)"
     # In rootless Podman the container's "root" is mapped to an
     # unprivileged host UID — chown will fail. That's fine: the volume
     # is already owned by the mapped user on the host side.
     #
-    # Top-level $HERMES_HOME: chown the directory itself (not its contents)
+    # Top-level $CORTEX_HOME: chown the directory itself (not its contents)
     # so hermes can mkdir new subdirs but bind-mounted host files keep
     # their existing ownership.
-    chown hermes:hermes "$HERMES_HOME" 2>/dev/null || \
-        echo "[stage2] Warning: chown $HERMES_HOME failed (rootless container?) — continuing"
+    chown hermes:hermes "$CORTEX_HOME" 2>/dev/null || \
+        echo "[stage2] Warning: chown $CORTEX_HOME failed (rootless container?) — continuing"
     # Hermes-owned subdirs: recursive chown is safe here because these are
     # created and managed exclusively by hermes (see the s6-setuidgid mkdir
     # -p block below for the canonical list).
     for sub in cron sessions logs hooks memories skills skins plans workspace home profiles pairing platforms/pairing; do
-        if [ -e "$HERMES_HOME/$sub" ]; then
-            chown -R hermes:hermes "$HERMES_HOME/$sub" 2>/dev/null || \
-                echo "[stage2] Warning: chown $HERMES_HOME/$sub failed (rootless container?) — continuing"
+        if [ -e "$CORTEX_HOME/$sub" ]; then
+            chown -R hermes:hermes "$CORTEX_HOME/$sub" 2>/dev/null || \
+                echo "[stage2] Warning: chown $CORTEX_HOME/$sub failed (rootless container?) — continuing"
         fi
     done
 fi
@@ -224,16 +224,16 @@ fi
 #     that runtime code may walk/update.
 # The set mirrors the build-time `chown -R hermes:hermes` line in the
 # Dockerfile — keep them in sync if the Dockerfile chown set changes.
-# These are under $INSTALL_DIR (not $HERMES_HOME), so the bind-mount
+# These are under $INSTALL_DIR (not $CORTEX_HOME), so the bind-mount
 # concern doesn't apply — recursive is fine.
 #
-# This MUST be gated independently of the $HERMES_HOME ownership check
+# This MUST be gated independently of the $CORTEX_HOME ownership check
 # above. `usermod -u <new> hermes` re-chowns the hermes home dir
-# ($HERMES_HOME == /opt/data) to the new UID as a side effect, so after a
-# HERMES_UID/PUID remap `stat $HERMES_HOME` always already matches the new
+# ($CORTEX_HOME == /opt/data) to the new UID as a side effect, so after a
+# HERMES_UID/PUID remap `stat $CORTEX_HOME` always already matches the new
 # UID and `needs_chown` is false — but the build trees under /opt/hermes
 # are NOT touched by usermod and remain owned by the build-time UID
-# (10000). Gating them on $HERMES_HOME ownership (as #35027 did) silently
+# (10000). Gating them on $CORTEX_HOME ownership (as #35027 did) silently
 # skipped this chown on the common PUID/NAS path, regressing lazy installs
 # and TUI rebuilds. Probe the build trees directly instead: chown only
 # when the venv is not already owned by the runtime hermes UID. Idempotent
@@ -251,28 +251,28 @@ if [ -n "$venv_owner" ] && [ "$venv_owner" != "$actual_hermes_uid" ]; then
         echo "[stage2] Warning: chown of build trees failed (rootless container?) — continuing"
 fi
 
-# Always reset ownership of $HERMES_HOME/profiles to hermes on every
+# Always reset ownership of $CORTEX_HOME/profiles to hermes on every
 # boot. Profile dirs and files can land owned by root when commands
 # are invoked via `docker exec <container> hermes …` (which defaults
 # to root unless `-u` is passed), and that breaks the cont-init
 # reconciler (02-reconcile-profiles) which runs as hermes and walks
 # the profiles dir. Idempotent; skipped on rootless containers where
 # chown would fail.
-if [ -d "$HERMES_HOME/profiles" ]; then
-    chown -R hermes:hermes "$HERMES_HOME/profiles" 2>/dev/null || true
+if [ -d "$CORTEX_HOME/profiles" ]; then
+    chown -R hermes:hermes "$CORTEX_HOME/profiles" 2>/dev/null || true
 fi
 
-# Always reset ownership of $HERMES_HOME/cron on every boot for the same
+# Always reset ownership of $CORTEX_HOME/cron on every boot for the same
 # docker-exec/root-write reason as profiles/. The cron scheduler state
 # (jobs.json) must stay readable by the unprivileged hermes runtime even
 # after root-context maintenance commands or scheduler writes.
-if [ -d "$HERMES_HOME/cron" ]; then
-    chown -R hermes:hermes "$HERMES_HOME/cron" 2>/dev/null || true
+if [ -d "$CORTEX_HOME/cron" ]; then
+    chown -R hermes:hermes "$CORTEX_HOME/cron" 2>/dev/null || true
 fi
 
 # Reset ownership of hermes-owned top-level state files on every boot.
 # The targeted data-volume chown above only covers hermes-owned
-# *subdirectories*; loose state files living directly under $HERMES_HOME
+# *subdirectories*; loose state files living directly under $CORTEX_HOME
 # are missed. When those files are created or rewritten by
 # `docker exec <container> hermes …` (root unless `-u` is passed) they
 # land root-owned, and the unprivileged hermes runtime then hits
@@ -280,7 +280,7 @@ fi
 # auth.json), producing a gateway restart loop.
 #
 # We use an explicit allowlist rather than a blanket `find -user root`
-# sweep so host-owned files in a bind-mounted $HERMES_HOME are never
+# sweep so host-owned files in a bind-mounted $CORTEX_HOME are never
 # touched — same targeted-ownership contract as the subdir chown above
 # (issue #19788, PR #19795). The list mirrors the top-level *file*
 # entries of hermes_cli.profile_distribution.USER_OWNED_EXCLUDE plus the
@@ -292,17 +292,17 @@ for f in \
     response_store.db response_store.db-shm response_store.db-wal \
     gateway.pid gateway.lock gateway_state.json processes.json \
     active_profile; do
-    if [ -e "$HERMES_HOME/$f" ]; then
-        chown hermes:hermes "$HERMES_HOME/$f" 2>/dev/null || true
+    if [ -e "$CORTEX_HOME/$f" ]; then
+        chown hermes:hermes "$CORTEX_HOME/$f" 2>/dev/null || true
     fi
 done
 
 # --- config.yaml permissions ---
 # Ensure config.yaml is readable by the hermes runtime user even if it
 # was edited on the host after initial ownership setup.
-if [ -f "$HERMES_HOME/config.yaml" ]; then
-    chown hermes:hermes "$HERMES_HOME/config.yaml" 2>/dev/null || true
-    chmod 640 "$HERMES_HOME/config.yaml" 2>/dev/null || true
+if [ -f "$CORTEX_HOME/config.yaml" ]; then
+    chown hermes:hermes "$CORTEX_HOME/config.yaml" 2>/dev/null || true
+    chmod 640 "$CORTEX_HOME/config.yaml" 2>/dev/null || true
 fi
 
 # --- Seed directory structure as hermes user ---
@@ -310,36 +310,36 @@ fi
 # under rootless Podman where chown back to root would fail).
 #
 # Use direct `mkdir -p` invocation (no `sh -c "..."` wrapper) so the
-# shell isn't a second interpreter — defends against $HERMES_HOME values
+# shell isn't a second interpreter — defends against $CORTEX_HOME values
 # containing shell metacharacters. PR #30136 review item O2.
 as_hermes mkdir -p \
-    "$HERMES_HOME/cron" \
-    "$HERMES_HOME/sessions" \
-    "$HERMES_HOME/logs" \
-    "$HERMES_HOME/hooks" \
-    "$HERMES_HOME/memories" \
-    "$HERMES_HOME/skills" \
-    "$HERMES_HOME/skins" \
-    "$HERMES_HOME/plans" \
-    "$HERMES_HOME/workspace" \
-    "$HERMES_HOME/home" \
-    "$HERMES_HOME/pairing" \
-    "$HERMES_HOME/platforms/pairing"
+    "$CORTEX_HOME/cron" \
+    "$CORTEX_HOME/sessions" \
+    "$CORTEX_HOME/logs" \
+    "$CORTEX_HOME/hooks" \
+    "$CORTEX_HOME/memories" \
+    "$CORTEX_HOME/skills" \
+    "$CORTEX_HOME/skins" \
+    "$CORTEX_HOME/plans" \
+    "$CORTEX_HOME/workspace" \
+    "$CORTEX_HOME/home" \
+    "$CORTEX_HOME/pairing" \
+    "$CORTEX_HOME/platforms/pairing"
 
 # --- Install-method stamp (read by detect_install_method() in hermes status) ---
 # Preserved from the tini-era entrypoint (PR #27843). Must be written as
 # the hermes user so ownership matches the file's documented owner.
 # tee is invoked directly via s6-setuidgid (no `sh -c` wrapper) for the
 # same shell-metacharacter safety described above.
-printf 'docker\n' | as_hermes tee "$HERMES_HOME/.install_method" >/dev/null \
+printf 'docker\n' | as_hermes tee "$CORTEX_HOME/.install_method" >/dev/null \
     || true
 
 # --- Seed config files (only on first boot) ---
 seed_one() {
     dest=$1
     src=$2
-    if [ ! -f "$HERMES_HOME/$dest" ] && [ -f "$INSTALL_DIR/$src" ]; then
-        as_hermes cp "$INSTALL_DIR/$src" "$HERMES_HOME/$dest"
+    if [ ! -f "$CORTEX_HOME/$dest" ] && [ -f "$INSTALL_DIR/$src" ]; then
+        as_hermes cp "$INSTALL_DIR/$src" "$CORTEX_HOME/$dest"
     fi
 }
 seed_one ".env" ".env.example"
@@ -349,18 +349,18 @@ seed_one "SOUL.md" "docker/SOUL.md"
 # .env holds API keys and secrets — restrict to owner-only access. Applied
 # unconditionally (not only on first-seed) so a host-mounted .env that was
 # created with a permissive umask gets tightened on every container start.
-if [ -f "$HERMES_HOME/.env" ]; then
-    chown hermes:hermes "$HERMES_HOME/.env" 2>/dev/null || true
-    chmod 600 "$HERMES_HOME/.env" 2>/dev/null || true
+if [ -f "$CORTEX_HOME/.env" ]; then
+    chown hermes:hermes "$CORTEX_HOME/.env" 2>/dev/null || true
+    chmod 600 "$CORTEX_HOME/.env" 2>/dev/null || true
 fi
 
 # --- Migrate persisted config schema ---
 # Docker image upgrades replace the code under $INSTALL_DIR but preserve
-# $HERMES_HOME on the mounted volume. Run the same safe, non-interactive
+# $CORTEX_HOME on the mounted volume. Run the same safe, non-interactive
 # config-schema migrations that `hermes update` runs for non-Docker installs,
 # after first-boot seeding and before supervised gateway services start.
 # Set HERMES_SKIP_CONFIG_MIGRATION=1 for controlled/manual migrations.
-if [ -f "$HERMES_HOME/config.yaml" ]; then
+if [ -f "$CORTEX_HOME/config.yaml" ]; then
     s6-setuidgid hermes "$INSTALL_DIR/.venv/bin/python" "$INSTALL_DIR/scripts/docker_config_migrate.py" \
         || echo "[stage2] Warning: docker_config_migrate.py failed; continuing"
 fi
@@ -368,10 +368,10 @@ fi
 # auth.json: bootstrap from env on first boot only. Same semantics as the
 # pre-s6 entrypoint — the [ ! -f ] guard is critical to avoid clobbering
 # rotated refresh tokens on container restart.
-if [ ! -f "$HERMES_HOME/auth.json" ] && [ -n "${HERMES_AUTH_JSON_BOOTSTRAP:-}" ]; then
-    printf '%s' "$HERMES_AUTH_JSON_BOOTSTRAP" > "$HERMES_HOME/auth.json"
-    chown hermes:hermes "$HERMES_HOME/auth.json" 2>/dev/null || true
-    chmod 600 "$HERMES_HOME/auth.json"
+if [ ! -f "$CORTEX_HOME/auth.json" ] && [ -n "${HERMES_AUTH_JSON_BOOTSTRAP:-}" ]; then
+    printf '%s' "$HERMES_AUTH_JSON_BOOTSTRAP" > "$CORTEX_HOME/auth.json"
+    chown hermes:hermes "$CORTEX_HOME/auth.json" 2>/dev/null || true
+    chmod 600 "$CORTEX_HOME/auth.json"
 fi
 
 # gateway_state.json: declare the gateway's INITIAL supervised state on a
@@ -399,11 +399,11 @@ fi
 # Only a literal "running" is honoured (the sole value in the reconciler's
 # _AUTOSTART_STATES); any other value is ignored so a typo can't write a
 # bogus state the reconciler would treat as "no prior state" anyway.
-if [ ! -f "$HERMES_HOME/gateway_state.json" ] && \
+if [ ! -f "$CORTEX_HOME/gateway_state.json" ] && \
         [ "${HERMES_GATEWAY_BOOTSTRAP_STATE:-}" = "running" ]; then
-    printf '{"gateway_state":"running"}\n' > "$HERMES_HOME/gateway_state.json"
-    chown hermes:hermes "$HERMES_HOME/gateway_state.json" 2>/dev/null || true
-    chmod 644 "$HERMES_HOME/gateway_state.json"
+    printf '{"gateway_state":"running"}\n' > "$CORTEX_HOME/gateway_state.json"
+    chown hermes:hermes "$CORTEX_HOME/gateway_state.json" 2>/dev/null || true
+    chmod 644 "$CORTEX_HOME/gateway_state.json"
 fi
 
 # --- Sync bundled skills ---

@@ -51,7 +51,7 @@ function buildWsUrl(
   // ``_ws_auth_ok`` picks whichever shape matches the current gate state.
   const qs = new URLSearchParams({ [authParam[0]]: authParam[1], channel });
   if (resume) qs.set("resume", resume);
-  // Profile-scoped chat: the PTY child gets HERMES_HOME pointed at the
+  // Profile-scoped chat: the PTY child gets CORTEX_HOME pointed at the
   // selected profile, so the conversation runs with that profile's model,
   // skills, memory, and sessions (see web_server._resolve_chat_argv).
   if (profile) qs.set("profile", profile);

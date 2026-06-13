@@ -1,12 +1,12 @@
 ---
 sidebar_position: 5
 title: "Microsoft Teams"
-description: "Set up Hermes Agent as a Microsoft Teams bot"
+description: "Set up Athena Agent as a Microsoft Teams bot"
 ---
 
 # Microsoft Teams Setup
 
-Connect Hermes Agent to Microsoft Teams as a bot. Unlike Slack's Socket Mode, Teams delivers messages by calling a **public HTTPS webhook**, so your instance needs a publicly reachable endpoint — either a dev tunnel (local dev) or a real domain (production).
+Connect Athena Agent to Microsoft Teams as a bot. Unlike Slack's Socket Mode, Teams delivers messages by calling a **public HTTPS webhook**, so your instance needs a publicly reachable endpoint — either a dev tunnel (local dev) or a real domain (production).
 
 Need meeting summaries from Microsoft Graph events rather than normal bot conversations? Use the dedicated setup page: [Teams Meetings](/user-guide/messaging/teams-meetings).
 
@@ -20,7 +20,7 @@ Need meeting summaries from Microsoft Graph events rather than normal bot conver
 | **Group chat** | Bot only responds when @mentioned. |
 | **Channel** | Bot only responds when @mentioned. |
 
-Teams delivers @mentions as regular messages with `<at>BotName</at>` tags, which Hermes strips automatically before processing.
+Teams delivers @mentions as regular messages with `<at>BotName</at>` tags, which Athena strips automatically before processing.
 
 ---
 
@@ -68,7 +68,7 @@ For production, point your bot's endpoint at your server's public domain instead
 
 ```bash
 teams app create \
-  --name "Hermes" \
+  --name "Athena" \
   --endpoint "https://<your-tunnel-url>/api/messages"
 ```
 
@@ -78,7 +78,7 @@ The CLI outputs your `CLIENT_ID`, `CLIENT_SECRET`, and `TENANT_ID`, plus an inst
 
 ## Step 4: Configure Environment Variables
 
-Add to `~/.hermes/.env`:
+Add to `~/.cortex/.env`:
 
 ```bash
 # Required
@@ -140,7 +140,7 @@ Open the printed link in your browser — it opens directly in the Teams client.
 
 ### config.yaml
 
-Alternatively, configure via `~/.hermes/config.yaml`:
+Alternatively, configure via `~/.cortex/config.yaml`:
 
 ```yaml
 platforms:
@@ -207,7 +207,7 @@ For a permanent server, skip devtunnel and register your bot with your server's 
 
 ```bash
 teams app create \
-  --name "Hermes" \
+  --name "Athena" \
   --endpoint "https://your-domain.com/api/messages"
 ```
 
@@ -228,7 +228,7 @@ Make sure your configured port (`TEAMS_PORT`, default `3978`) is reachable from 
 | `health` endpoint works but bot doesn't respond | Check that your tunnel is still running and the bot's messaging endpoint matches the tunnel URL |
 | `KeyError: 'teams'` in logs | Restart the container — this is fixed in the current version |
 | Bot responds with auth errors | Verify `TEAMS_CLIENT_ID`, `TEAMS_CLIENT_SECRET`, and `TEAMS_TENANT_ID` are all set correctly |
-| `No inference provider configured` | Check that `ANTHROPIC_API_KEY` (or another provider key) is set in `~/.hermes/.env` |
+| `No inference provider configured` | Check that `ANTHROPIC_API_KEY` (or another provider key) is set in `~/.cortex/.env` |
 | Bot receives messages but ignores them | Your AAD object ID may not be in `TEAMS_ALLOWED_USERS`. Run `teams status --verbose` to find it |
 | Tunnel URL changes on restart | devtunnel URLs are persistent if you use a named tunnel (`devtunnel create hermes-bot`). ngrok and cloudflared generate a new URL each run unless you have a paid plan — update the bot endpoint with `teams app update` when it changes |
 | Teams shows "This bot is not responding" | The webhook returned an error. Check `docker logs hermes` for tracebacks |
@@ -244,7 +244,7 @@ Make sure your configured port (`TEAMS_PORT`, default `3978`) is reachable from 
 Treat `TEAMS_CLIENT_SECRET` like a password — rotate it periodically via the Azure portal or Teams CLI.
 :::
 
-- Store credentials in `~/.hermes/.env` with permissions `600` (`chmod 600 ~/.hermes/.env`)
+- Store credentials in `~/.cortex/.env` with permissions `600` (`chmod 600 ~/.cortex/.env`)
 - The bot only accepts messages from users in `TEAMS_ALLOWED_USERS`; unauthorized messages are silently dropped
 - Your public endpoint (`/api/messages`) is authenticated by the Teams Bot Framework — requests without valid JWTs are rejected
 

@@ -1,11 +1,11 @@
 # ============================================================================
-# Hermes Agent Installer for Windows
+# Athena Agent Installer for Windows
 # ============================================================================
 # Installation script for Windows (PowerShell).
 # Uses uv for fast Python provisioning and package management.
 #
 # Usage:
-#   iex (irm https://hermes-agent.nousresearch.com/install.ps1)
+#   iex (irm https://athena-agent.nousresearch.com/install.ps1)
 #
 # Or download and run with options:
 #   .\install.ps1 -NoVenv -SkipSetup
@@ -23,8 +23,8 @@ param(
     # exact ref.  Precedence: Commit > Tag > Branch.
     [string]$Commit = "",
     [string]$Tag = "",
-    [string]$HermesHome = $(if ($env:HERMES_HOME) { $env:HERMES_HOME } else { "$env:LOCALAPPDATA\hermes" }),
-    [string]$InstallDir = $(if ($env:HERMES_HOME) { "$env:HERMES_HOME\hermes-agent" } else { "$env:LOCALAPPDATA\hermes\hermes-agent" }),
+    [string]$HermesHome = $(if ($env:CORTEX_HOME) { $env:CORTEX_HOME } else { "$env:LOCALAPPDATA\hermes" }),
+    [string]$InstallDir = $(if ($env:CORTEX_HOME) { "$env:CORTEX_HOME\athena-agent" } else { "$env:LOCALAPPDATA\hermes\athena-agent" }),
 
     # --- Stage protocol (additive; default invocation behaves as before) ----
     # See the "Stage protocol" section near the bottom of the file for the
@@ -92,8 +92,8 @@ try {
 # Configuration
 # ============================================================================
 
-$RepoUrlSsh = "git@github.com:NousResearch/hermes-agent.git"
-$RepoUrlHttps = "https://github.com/NousResearch/hermes-agent.git"
+$RepoUrlSsh = "git@github.com:dr-shabana/athena-agent.git"
+$RepoUrlHttps = "https://github.com/dr-shabana/athena-agent.git"
 $PythonVersion = "3.11"
 $NodeVersion = "22"
 
@@ -158,7 +158,7 @@ function Get-WindowsArch {
 function Write-Banner {
     Write-Host ""
     Write-Host "+---------------------------------------------------------+" -ForegroundColor Magenta
-    Write-Host "|             * Hermes Agent Installer                    |" -ForegroundColor Magenta
+    Write-Host "|             * Athena Agent Installer                    |" -ForegroundColor Magenta
     Write-Host "+---------------------------------------------------------+" -ForegroundColor Magenta
     Write-Host "|  An open source AI agent by Nous Research.              |" -ForegroundColor Magenta
     Write-Host "+---------------------------------------------------------+" -ForegroundColor Magenta
@@ -404,7 +404,7 @@ function Resolve-UvCmd {
     }
 
     # Fall back to PATH (covers edge cases where the installer ran in a
-    # sibling process and HERMES_HOME wasn't propagated).
+    # sibling process and CORTEX_HOME wasn't propagated).
     if (Get-Command uv -ErrorAction SilentlyContinue) {
         $script:UvCmd = "uv"
         return
@@ -1329,17 +1329,17 @@ function Install-Repository {
                 # for.  GitHub supports archive URLs for commits, tags, and
                 # branches; we honour Commit > Tag > Branch.
                 if ($Commit) {
-                    $zipUrl = "https://github.com/NousResearch/hermes-agent/archive/$Commit.zip"
+                    $zipUrl = "https://github.com/dr-shabana/athena-agent/archive/$Commit.zip"
                     $zipLabel = $Commit
                 } elseif ($Tag) {
-                    $zipUrl = "https://github.com/NousResearch/hermes-agent/archive/refs/tags/$Tag.zip"
+                    $zipUrl = "https://github.com/dr-shabana/athena-agent/archive/refs/tags/$Tag.zip"
                     $zipLabel = $Tag
                 } else {
-                    $zipUrl = "https://github.com/NousResearch/hermes-agent/archive/refs/heads/$Branch.zip"
+                    $zipUrl = "https://github.com/dr-shabana/athena-agent/archive/refs/heads/$Branch.zip"
                     $zipLabel = $Branch
                 }
-                $zipPath = "$env:TEMP\hermes-agent-$zipLabel.zip"
-                $extractPath = "$env:TEMP\hermes-agent-extract"
+                $zipPath = "$env:TEMP\athena-agent-$zipLabel.zip"
+                $extractPath = "$env:TEMP\athena-agent-extract"
 
                 Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing
                 if (Test-Path $extractPath) { Remove-Item -Recurse -Force $extractPath }
@@ -1553,7 +1553,7 @@ try:
     specs = data['project']['optional-dependencies']['all']
     out = []
     for s in specs:
-        m = re.search(r'hermes-agent\[([\w-]+)\]', s)
+        m = re.search(r'athena-agent\[([\w-]+)\]', s)
         if m: out.append(m.group(1))
     print(','.join(out))
 except Exception:
@@ -1591,7 +1591,7 @@ except Exception:
         }
     }
     if (-not $installed) {
-        throw "Failed to install hermes-agent package even with no extras. Inspect the uv pip install output above."
+        throw "Failed to install athena-agent package even with no extras. Inspect the uv pip install output above."
     }
 
     # Baseline-import gate. Even if a tier reported success above, the
@@ -1689,15 +1689,15 @@ function Set-PathVariable {
         Write-Info "PATH already configured"
     }
     
-    # Set HERMES_HOME so the Python code finds config/data in the right place.
+    # Set CORTEX_HOME so the Python code finds config/data in the right place.
     # Only needed on Windows where we install to %LOCALAPPDATA%\hermes instead
     # of the Unix default ~/.hermes
-    $currentHermesHome = [Environment]::GetEnvironmentVariable("HERMES_HOME", "User")
+    $currentHermesHome = [Environment]::GetEnvironmentVariable("CORTEX_HOME", "User")
     if (-not $currentHermesHome -or $currentHermesHome -ne $HermesHome) {
-        [Environment]::SetEnvironmentVariable("HERMES_HOME", $HermesHome, "User")
-        Write-Success "Set HERMES_HOME=$HermesHome"
+        [Environment]::SetEnvironmentVariable("CORTEX_HOME", $HermesHome, "User")
+        Write-Success "Set CORTEX_HOME=$HermesHome"
     }
-    $env:HERMES_HOME = $HermesHome
+    $env:CORTEX_HOME = $HermesHome
     
     # Update current session
     $env:Path = "$hermesBin;$env:Path"
@@ -1785,7 +1785,7 @@ function Write-BootstrapMarker {
 function Copy-ConfigTemplates {
     Write-Info "Setting up configuration files..."
     
-    # Create the HERMES_HOME directory structure ($HermesHome, default %LOCALAPPDATA%\hermes)
+    # Create the CORTEX_HOME directory structure ($HermesHome, default %LOCALAPPDATA%\hermes)
     New-Item -ItemType Directory -Force -Path "$HermesHome\cron" | Out-Null
     New-Item -ItemType Directory -Force -Path "$HermesHome\sessions" | Out-Null
     New-Item -ItemType Directory -Force -Path "$HermesHome\logs" | Out-Null
@@ -1836,7 +1836,7 @@ function Copy-ConfigTemplates {
     $soulPath = "$HermesHome\SOUL.md"
     if (-not (Test-Path $soulPath)) {
         $soulContent = @"
-# Hermes Agent Persona
+# Athena Agent Persona
 
 <!--
 This file defines the agent's personality and tone.
@@ -2427,7 +2427,7 @@ function New-DesktopShortcuts {
                 $sc.TargetPath = $TargetExe
                 $sc.WorkingDirectory = $workDir
                 $sc.IconLocation = $iconLocation
-                $sc.Description = 'Hermes Agent'
+                $sc.Description = 'Athena Agent'
                 $sc.Save()
                 Write-Success "Shortcut created: $lnkPath"
             } catch {
@@ -2453,7 +2453,7 @@ function New-DesktopShortcuts {
 
 function Install-PlatformSdks {
     # Ensure messaging-platform SDKs matching tokens the user added to
-    # ~/.hermes/.env are importable.  Two problems this solves:
+    # ~/.cortex/.env are importable.  Two problems this solves:
     #
     # 1. The tiered `uv pip install` cascade above can fall through to a
     #    lower tier when the first fails (common when RL git deps choke),
@@ -2605,7 +2605,7 @@ function Start-GatewayIfConfigured {
 
     $hermesCmd = "$InstallDir\venv\Scripts\hermes.exe"
     if (-not (Test-Path $hermesCmd)) {
-        $hermesCmd = "hermes"
+        $hermesCmd = "athena"
     }
 
     # If WhatsApp is enabled but not yet paired, run foreground for QR scan
@@ -2685,7 +2685,7 @@ function Write-Completion {
     Write-Host "   Data:      " -NoNewline -ForegroundColor Yellow
     Write-Host "$HermesHome\cron\, sessions\, logs\"
     Write-Host "   Code:      " -NoNewline -ForegroundColor Yellow
-    Write-Host "$HermesHome\hermes-agent\"
+    Write-Host "$HermesHome\athena-agent\"
     Write-Host ""
     
     Write-Host "---------------------------------------------------------" -ForegroundColor Cyan
@@ -3103,7 +3103,7 @@ try {
     Write-Err "Installation failed: $_"
     Write-Host ""
     Write-Info "If the error is unclear, try downloading and running the script directly:"
-    Write-Host "  Invoke-WebRequest -Uri 'https://hermes-agent.nousresearch.com/install.ps1' -OutFile install.ps1" -ForegroundColor Yellow
+    Write-Host "  Invoke-WebRequest -Uri 'https://athena-agent.nousresearch.com/install.ps1' -OutFile install.ps1" -ForegroundColor Yellow
     Write-Host "  .\install.ps1" -ForegroundColor Yellow
     Write-Host ""
 }

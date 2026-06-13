@@ -17,12 +17,12 @@ Or manually:
 
 ```bash
 hermes config set memory.provider supermemory
-echo 'SUPERMEMORY_API_KEY=***' >> ~/.hermes/.env
+echo 'SUPERMEMORY_API_KEY=***' >> ~/.cortex/.env
 ```
 
 ## Config
 
-Config file: `$HERMES_HOME/supermemory.json`
+Config file: `$CORTEX_HOME/supermemory.json`
 
 | Key | Default | Description |
 |-----|---------|-------------|
@@ -58,13 +58,13 @@ Kebab-case names are registered for the agent; snake_case aliases remain support
 
 All Supermemory API calls send `x-sm-source: hermes`, and document writes stamp
 `metadata.sm_source: hermes`. This is a **functional routing key, not telemetry**:
-it groups Hermes-written memories into a dedicated "Hermes" Space in the
+it groups Athena-written memories into a dedicated "Athena" Space in the
 Supermemory app, so you can filter, browse, and bulk-manage them per source agent
 (alongside Codex, Claude Code, etc.) from the Supermemory UI.
 
 ## Behavior
 
-When enabled, Hermes can:
+When enabled, Athena can:
 
 - prefetch relevant memory context before each turn
 - buffer the full conversation and ingest it as **one session** at session end (or on `/reset`, branch, compression, or shutdown)
@@ -75,7 +75,7 @@ The session is written once via the conversations endpoint, which drives Superme
 
 ## Profile-Scoped Containers
 
-Use `{identity}` in the `container_tag` to scope memories per Hermes profile:
+Use `{identity}` in the `container_tag` to scope memories per Athena profile:
 
 ```json
 {
@@ -91,7 +91,7 @@ For advanced setups (e.g. OpenClaw-style multi-workspace), you can enable custom
 
 ```json
 {
-  "container_tag": "hermes",
+  "container_tag": "athena",
   "enable_custom_container_tags": true,
   "custom_containers": ["project-alpha", "project-beta", "shared-knowledge"],
   "custom_container_instructions": "Use project-alpha for coding tasks, project-beta for research, and shared-knowledge for team-wide facts."

@@ -1,17 +1,17 @@
 ---
 sidebar_position: 3
 title: "Built-in Tools Reference"
-description: "Authoritative reference for Hermes built-in tools, grouped by toolset"
+description: "Authoritative reference for Athena built-in tools, grouped by toolset"
 ---
 
 # Built-in Tools Reference
 
-This page documents Hermes' built-in tools, grouped by toolset. Availability varies by platform, credentials, and enabled toolsets.
+This page documents Athena' built-in tools, grouped by toolset. Availability varies by platform, credentials, and enabled toolsets.
 
 **Quick counts (current registry):** ~71 tools — 10 browser tools (core) + 2 CDP-gated browser tools, 4 file tools, 4 Home Assistant tools, 2 terminal tools, 2 web tools, 5 Feishu tools, 7 Spotify tools (registered by the bundled `spotify` plugin), 5 Yuanbao tools, 9 kanban tools (registered when the kanban dispatcher spawns the agent), 2 Discord tools, and a handful of standalone tools (`memory`, `clarify`, `delegate_task`, `execute_code`, `cronjob`, `session_search`, `skill_view`/`skill_manage`/`skills_list`, `text_to_speech`, `image_generate`, `video_generate`, `vision_analyze`, `video_analyze`, `mixture_of_agents`, `send_message`, `todo`, `computer_use`, `process`).
 
 :::tip MCP Tools
-In addition to built-in tools, Hermes can load tools dynamically from MCP servers. MCP tools appear with the prefix `mcp_<server>_` (e.g., `mcp_github_create_issue` for the `github` MCP server). See [MCP Integration](/user-guide/features/mcp) for configuration.
+In addition to built-in tools, Athena can load tools dynamically from MCP servers. MCP tools appear with the prefix `mcp_<server>_` (e.g., `mcp_github_create_issue` for the `github` MCP server). See [MCP Integration](/user-guide/features/mcp) for configuration.
 :::
 
 ## `browser` toolset
@@ -48,7 +48,7 @@ These two tools live in the `browser` toolset but only register when a Chrome De
 
 | Tool | Description | Requires environment |
 |------|-------------|----------------------|
-| `execute_code` | Run a Python script that can call Hermes tools programmatically. Use this when you need 3+ tool calls with processing logic between them, need to filter/reduce large tool outputs before they enter your context, need conditional branching (… | — |
+| `execute_code` | Run a Python script that can call Athena tools programmatically. Use this when you need 3+ tool calls with processing logic between them, need to filter/reduce large tool outputs before they enter your context, need conditional branching (… | — |
 
 ## `cronjob` toolset
 
@@ -118,18 +118,18 @@ Scoped to the Feishu document-comment handler. Drives comment read/write operati
 
 ## `kanban` toolset
 
-Registered when the agent is either (a) spawned by the kanban dispatcher (`HERMES_KANBAN_TASK` env set) or (b) running in a profile that explicitly enables the `kanban` toolset. Task-scoped workers use lifecycle tools for their assigned task; orchestrator profiles additionally get board-routing tools like `kanban_list` and `kanban_unblock`. See [Kanban Multi-Agent](/user-guide/features/kanban) for the full workflow.
+Registered when the agent is either (a) spawned by the kanban dispatcher (`CORTEX_KANBAN_TASK` env set) or (b) running in a profile that explicitly enables the `kanban` toolset. Task-scoped workers use lifecycle tools for their assigned task; orchestrator profiles additionally get board-routing tools like `kanban_list` and `kanban_unblock`. See [Kanban Multi-Agent](/user-guide/features/kanban) for the full workflow.
 
 | Tool | Description | Requires environment |
 |------|-------------|----------------------|
-| `kanban_show` | Show the active kanban task assigned to this worker (title, description, comments, dependencies). | `HERMES_KANBAN_TASK` or `kanban` toolset |
+| `kanban_show` | Show the active kanban task assigned to this worker (title, description, comments, dependencies). | `CORTEX_KANBAN_TASK` or `kanban` toolset |
 | `kanban_list` | List board tasks with filters. Orchestrator-only; hidden from dispatcher-spawned task workers. | profile with `kanban` toolset |
-| `kanban_complete` | Mark the current task done with a structured handoff payload (results, artifacts, follow-ups). | `HERMES_KANBAN_TASK` or `kanban` toolset |
-| `kanban_block` | Block the current task on a question for the user — the dispatcher pauses, surfaces the question, and resumes once a human replies. | `HERMES_KANBAN_TASK` or `kanban` toolset |
-| `kanban_heartbeat` | Send a progress heartbeat during a long-running operation so the dispatcher knows the worker is still alive. | `HERMES_KANBAN_TASK` or `kanban` toolset |
-| `kanban_comment` | Add a comment to the task thread without changing its state — useful for surfacing intermediate findings. | `HERMES_KANBAN_TASK` or `kanban` toolset |
-| `kanban_create` | Fan out child tasks from the current task. Used by orchestrators and follow-up-spawning workers. | `HERMES_KANBAN_TASK` or `kanban` toolset |
-| `kanban_link` | Link tasks with a parent → child dependency edge. | `HERMES_KANBAN_TASK` or `kanban` toolset |
+| `kanban_complete` | Mark the current task done with a structured handoff payload (results, artifacts, follow-ups). | `CORTEX_KANBAN_TASK` or `kanban` toolset |
+| `kanban_block` | Block the current task on a question for the user — the dispatcher pauses, surfaces the question, and resumes once a human replies. | `CORTEX_KANBAN_TASK` or `kanban` toolset |
+| `kanban_heartbeat` | Send a progress heartbeat during a long-running operation so the dispatcher knows the worker is still alive. | `CORTEX_KANBAN_TASK` or `kanban` toolset |
+| `kanban_comment` | Add a comment to the task thread without changing its state — useful for surfacing intermediate findings. | `CORTEX_KANBAN_TASK` or `kanban` toolset |
+| `kanban_create` | Fan out child tasks from the current task. Used by orchestrators and follow-up-spawning workers. | `CORTEX_KANBAN_TASK` or `kanban` toolset |
+| `kanban_link` | Link tasks with a parent → child dependency edge. | `CORTEX_KANBAN_TASK` or `kanban` toolset |
 | `kanban_unblock` | Return a blocked task to `ready`. Orchestrator-only; hidden from dispatcher-spawned task workers. | profile with `kanban` toolset |
 
 ## `memory` toolset
@@ -160,7 +160,7 @@ Registered when the agent is either (a) spawned by the kanban dispatcher (`HERME
 
 | Tool | Description | Requires environment |
 |------|-------------|----------------------|
-| `skill_manage` | Manage skills (create, update, delete). Skills are your procedural memory — reusable approaches for recurring task types. New skills go to ~/.hermes/skills/; existing skills can be modified wherever they live. Actions: create (full SKILL.m… | — |
+| `skill_manage` | Manage skills (create, update, delete). Skills are your procedural memory — reusable approaches for recurring task types. New skills go to ~/.cortex/skills/; existing skills can be modified wherever they live. Actions: create (full SKILL.m… | — |
 | `skill_view` | Skills allow for loading information about specific tasks and workflows, as well as scripts and templates. Load a skill's full content or access its linked files (references, templates, scripts). First call returns SKILL.md content plus a… | — |
 | `skills_list` | List available skills (name + description). Use skill_view(name) to load full content. | — |
 

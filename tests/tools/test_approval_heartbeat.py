@@ -38,10 +38,10 @@ class TestApprovalHeartbeat:
         _clear_approval_state()
         self._saved_env = {
             k: os.environ.get(k)
-            for k in ("HERMES_GATEWAY_SESSION", "HERMES_YOLO_MODE",
+            for k in ("HERMES_GATEWAY_SESSION", "CORTEX_YOLO_MODE",
                       "HERMES_SESSION_KEY")
         }
-        os.environ.pop("HERMES_YOLO_MODE", None)
+        os.environ.pop("CORTEX_YOLO_MODE", None)
         os.environ["HERMES_GATEWAY_SESSION"] = "1"
         # The blocking wait path reads the session key via contextvar OR
         # os.environ fallback.  Contextvars don't propagate across threads

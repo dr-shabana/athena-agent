@@ -80,7 +80,7 @@ _DESTRUCTIVE_ACTIONS = frozenset({
 })
 
 # Hard-blocked key combinations. Mirrored from #4562 — these are destructive
-# regardless of approval level (e.g. logout kills the session Hermes runs in).
+# regardless of approval level (e.g. logout kills the session Athena runs in).
 _BLOCKED_KEY_COMBOS = {
     frozenset({"cmd", "shift", "backspace"}),   # empty trash
     frozenset({"cmd", "option", "backspace"}),   # force delete
@@ -253,7 +253,7 @@ def handle_computer_use(args: Dict[str, Any], **kwargs) -> Any:
     except Exception as e:
         return json.dumps({
             "error": f"computer_use backend unavailable: {e}",
-            "hint": "Run `hermes tools` and enable Computer Use to install cua-driver.",
+            "hint": "Run `athena tools` and enable Computer Use to install cua-driver.",
         })
 
     try:
@@ -624,7 +624,7 @@ def _should_route_through_aux_vision() -> bool:
     """
     try:
         from agent.auxiliary_client import _read_main_model, _read_main_provider
-        from hermes_cli.config import load_config
+        from cortex_cli.config import load_config
         from tools.computer_use.vision_routing import (
             should_route_capture_to_aux_vision,
         )
@@ -651,7 +651,7 @@ def _route_capture_through_aux_vision(
 ) -> Optional[str]:
     """Pre-analyse the captured PNG via ``vision_analyze`` and return a text result.
 
-    The captured base64 PNG is materialised to ``$HERMES_HOME/cache/vision/``
+    The captured base64 PNG is materialised to ``$CORTEX_HOME/cache/vision/``
     and handed to ``vision_analyze_tool`` with a generic describe prompt.
     The resulting text description is merged into the existing AX/SOM
     summary so the main model receives a single text payload that mentions
@@ -669,7 +669,7 @@ def _route_capture_through_aux_vision(
         import os as _os
         import uuid as _uuid
 
-        from hermes_constants import get_hermes_dir
+        from cortex_constants import get_hermes_dir
         from model_tools import _run_async
         from tools.vision_tools import vision_analyze_tool
     except Exception as exc:  # pragma: no cover - defensive

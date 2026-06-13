@@ -17,7 +17,7 @@ want up``). Both states are valid "user asked for gateway up" results
 the supervised process's health. ``s6-svc -u`` records ``want up`` in
 the supervise/status file regardless of the run-script outcome.
 
-Every ``docker exec`` here runs as the unprivileged ``hermes`` user
+Every ``docker exec`` here runs as the unprivileged ``athena`` user
 (via :func:`docker_exec_sh` in conftest); see the conftest module
 docstring.
 """

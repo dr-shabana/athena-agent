@@ -35,7 +35,7 @@ declare global {
       profile: {
         get: () => Promise<DesktopActiveProfile>
         // Persists the desktop's profile choice and relaunches the local
-        // backend under the new HERMES_HOME (reloads the window). Pass null to
+        // backend under the new CORTEX_HOME (reloads the window). Pass null to
         // clear the preference.
         set: (name: string | null) => Promise<DesktopActiveProfile>
       }
@@ -165,7 +165,7 @@ export interface DesktopVersionInfo {
 export type DesktopUninstallMode = 'full' | 'gui' | 'lite'
 
 export interface DesktopUninstallSummary {
-  hermes_home: string
+  cortex_home: string
   agent_installed: boolean
   gui_installed: boolean
   source_built_artifacts: string[]

@@ -21,14 +21,14 @@ from tools.approval import (
 @pytest.fixture
 def isolated_session(monkeypatch, tmp_path):
     """Give each test a fresh session_key, clean approval-state, and isolated
-    HERMES_HOME so the real user's command_allowlist doesn't leak in."""
+    CORTEX_HOME so the real user's command_allowlist doesn't leak in."""
     import tools.approval as _am
 
     session_key = "test:session:approval_hooks"
     token = set_current_session_key(session_key)
     monkeypatch.setenv("HERMES_SESSION_KEY", session_key)
     # Make sure we don't skip guards via yolo / approvals.mode=off
-    monkeypatch.delenv("HERMES_YOLO_MODE", raising=False)
+    monkeypatch.delenv("CORTEX_YOLO_MODE", raising=False)
     # Isolate from the real user's permanent allowlist + session state
     _saved_permanent = _am._permanent_approved.copy()
     _saved_session = {k: v.copy() for k, v in _am._session_approved.items()}
@@ -69,7 +69,7 @@ class TestCliPathFiresHooks:
         def cb(command, description, *, allow_permanent=True):
             return "once"
 
-        with patch("hermes_cli.plugins.invoke_hook", side_effect=fake_invoke_hook):
+        with patch("cortex_cli.plugins.invoke_hook", side_effect=fake_invoke_hook):
             result = check_all_command_guards(
                 "rm -rf /tmp/test-hook", "local", approval_callback=cb,
             )
@@ -108,7 +108,7 @@ class TestCliPathFiresHooks:
         def cb(command, description, *, allow_permanent=True):
             return "deny"
 
-        with patch("hermes_cli.plugins.invoke_hook", side_effect=fake_invoke_hook):
+        with patch("cortex_cli.plugins.invoke_hook", side_effect=fake_invoke_hook):
             result = check_all_command_guards(
                 "rm -rf /tmp/test-deny", "local", approval_callback=cb,
             )
@@ -134,7 +134,7 @@ class TestCliPathFiresHooks:
         def cb(command, description, *, allow_permanent=True):
             return "once"
 
-        with patch("hermes_cli.plugins.invoke_hook", side_effect=boom):
+        with patch("cortex_cli.plugins.invoke_hook", side_effect=boom):
             result = check_all_command_guards(
                 "rm -rf /tmp/test-crash", "local", approval_callback=cb,
             )

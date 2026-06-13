@@ -254,7 +254,7 @@ class TestOpenVikingMemoryUriBuilder:
         assert uri.endswith(".md")
 
     def test_uri_uses_configured_agent_not_default(self):
-        """_agent value must be interpolated — not hardcoded to 'hermes'."""
+        """_agent value must be interpolated — not hardcoded to 'athena'."""
         p = self._make_provider(user="alice", agent="research-bot")
         uri = p._build_memory_uri("entities")
         assert "/agent/research-bot/" in uri

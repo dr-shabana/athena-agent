@@ -50,7 +50,7 @@ export const it: Translations = {
   },
 
   app: {
-    brand: "Hermes Agent",
+    brand: "Athena Agent",
     brandShort: "HA",
     closeNavigation: "Chiudi navigazione",
     closeModelTools: "Chiudi modello e strumenti",
@@ -336,8 +336,8 @@ export const it: Translations = {
     providersHint:
       "Scrive memory.provider (vuoto = integrato) e context.engine in config.yaml. Effetto dalla prossima sessione.",
     refreshDashboard: "Riscansiona estensioni dashboard",
-    removeConfirm: "Rimuovere questo plugin da ~/.hermes/plugins/?",
-    removeHint: "Solo i plugin installati dall'utente in ~/.hermes/plugins possono essere rimossi.",
+    removeConfirm: "Rimuovere questo plugin da ~/.cortex/plugins/?",
+    removeHint: "Solo i plugin installati dall'utente in ~/.cortex/plugins possono essere rimossi.",
     rescanHeading: "Registro plugin SPA",
     rescanHint: "Riscansiona dopo aver aggiunto file su disco affinché la barra laterale rilevi i nuovi manifest.",
     runtimeHeading: "Runtime gateway (plugin YAML)",
@@ -359,7 +359,7 @@ export const it: Translations = {
     all: "Tutti",
     categories: "Categorie",
     filters: "Filtri",
-    noSkills: "Nessuna competenza trovata. Le competenze vengono caricate da ~/.hermes/skills/",
+    noSkills: "Nessuna competenza trovata. Le competenze vengono caricate da ~/.cortex/skills/",
     noSkillsMatch: "Nessuna competenza corrisponde alla ricerca o al filtro.",
     skillCount: "{count} competenz{s}",
     resultCount: "{count} risultat{s}",
@@ -373,7 +373,7 @@ export const it: Translations = {
   },
 
   config: {
-    configPath: "~/.hermes/config.yaml",
+    configPath: "~/.cortex/config.yaml",
     filters: "Filtri",
     sections: "Sezioni",
     exportConfig: "Esporta configurazione come JSON",
@@ -584,7 +584,7 @@ export const it: Translations = {
         "Condividi su X apre un post precompilato in una nuova scheda. Clicca prima su Copia immagine se vuoi allegare il badge 1200×630 — X ti permette di incollarlo direttamente nell'editor del tweet. Scarica PNG salva il file per l'uso ovunque.",
       clipboard_unsupported:
         "La copia delle immagini negli appunti non è supportata in questo browser — usa Scarica invece.",
-      tweet_text: "Just unlocked {tier_part}\"{name}\" in Hermes Agent ☤",
+      tweet_text: "Just unlocked {tier_part}\"{name}\" in Athena Agent ☤",
     },
   },
   kanban: {

@@ -1,7 +1,7 @@
 """Contract test: stage2-hook repairs ownership of the gateway install tree.
 
 When HERMES_UID is remapped at container boot, ``usermod -u`` only rewrites
-files under the hermes user's home directory ($HERMES_HOME == /opt/data).
+files under the hermes user's home directory ($CORTEX_HOME == /opt/data).
 Runtime-writable trees under ``/opt/hermes`` must be explicitly chowned to the
 new UID before services drop privileges. ``/opt/hermes/gateway`` is one such
 tree: Python writes ``__pycache__`` beneath the package on first import, which

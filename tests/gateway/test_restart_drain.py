@@ -90,7 +90,7 @@ async def test_draining_rejects_new_session_messages():
 
 
 def test_load_busy_input_mode_prefers_env_then_config_then_default(tmp_path, monkeypatch):
-    monkeypatch.setattr(gateway_run, "_hermes_home", tmp_path)
+    monkeypatch.setattr(gateway_run, "_cortex_home", tmp_path)
     monkeypatch.delenv("HERMES_GATEWAY_BUSY_INPUT_MODE", raising=False)
 
     assert gateway_run.GatewayRunner._load_busy_input_mode() == "interrupt"
@@ -117,7 +117,7 @@ def test_load_busy_input_mode_prefers_env_then_config_then_default(tmp_path, mon
 
 
 def test_load_busy_text_mode_follows_input_mode_and_honors_legacy(tmp_path, monkeypatch):
-    monkeypatch.setattr(gateway_run, "_hermes_home", tmp_path)
+    monkeypatch.setattr(gateway_run, "_cortex_home", tmp_path)
     monkeypatch.delenv("HERMES_GATEWAY_BUSY_TEXT_MODE", raising=False)
     monkeypatch.delenv("HERMES_GATEWAY_BUSY_INPUT_MODE", raising=False)
 
@@ -152,7 +152,7 @@ def test_load_busy_text_mode_follows_input_mode_and_honors_legacy(tmp_path, monk
 def test_load_restart_drain_timeout_prefers_env_then_config_then_default(
     tmp_path, monkeypatch, caplog
 ):
-    monkeypatch.setattr(gateway_run, "_hermes_home", tmp_path)
+    monkeypatch.setattr(gateway_run, "_cortex_home", tmp_path)
     monkeypatch.delenv("HERMES_RESTART_DRAIN_TIMEOUT", raising=False)
 
     assert (
@@ -256,12 +256,12 @@ async def test_windows_detached_restart_scrubs_gateway_marker(monkeypatch, tmp_p
     site_packages.mkdir(parents=True)
 
     monkeypatch.setattr(gateway_run.sys, "platform", "win32")
-    monkeypatch.setattr(gateway_run, "_resolve_hermes_bin", lambda: ["hermes"])
+    monkeypatch.setattr(gateway_run, "_resolve_hermes_bin", lambda: ["athena"])
     monkeypatch.setattr(gateway_run.os, "getpid", lambda: 321)
     monkeypatch.setenv("_HERMES_GATEWAY", "1")
     monkeypatch.setenv("VIRTUAL_ENV", str(venv_dir))
 
-    import hermes_cli._subprocess_compat as subprocess_compat
+    import cortex_cli._subprocess_compat as subprocess_compat
 
     monkeypatch.setattr(
         subprocess_compat,
@@ -279,7 +279,7 @@ async def test_windows_detached_restart_scrubs_gateway_marker(monkeypatch, tmp_p
 
     assert len(popen_calls) == 1
     cmd, kwargs = popen_calls[0]
-    assert cmd[-3:] == ["hermes", "gateway", "restart"]
+    assert cmd[-3:] == ["athena", "gateway", "restart"]
     assert kwargs["env"].get("_HERMES_GATEWAY") is None
     assert kwargs["env"]["VIRTUAL_ENV"] == str(venv_dir)
     assert str(site_packages) in kwargs["env"]["PYTHONPATH"].split(gateway_run.os.pathsep)

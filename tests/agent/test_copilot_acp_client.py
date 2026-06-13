@@ -59,7 +59,7 @@ class CopilotACPClientSafetyTests(unittest.TestCase):
 
             with patch.dict(
                 os.environ,
-                {"HOME": str(home), "HERMES_HOME": str(home / ".hermes")},
+                {"HOME": str(home), "CORTEX_HOME": str(home / ".hermes")},
                 clear=False,
             ):
                 response = self._dispatch(
@@ -80,7 +80,7 @@ class CopilotACPClientSafetyTests(unittest.TestCase):
             secret_file = root / "config.env"
             secret_file.write_text("OPENAI_API_KEY=sk-proj-abc123def456ghi789jkl012")
 
-            # agent.redact snapshots HERMES_REDACT_SECRETS at import time into
+            # agent.redact snapshots CORTEX_REDACT_SECRETS at import time into
             # _REDACT_ENABLED, so patching os.environ is a no-op. Flip the
             # module-level constant directly for the duration of the call.
             with patch("agent.redact._REDACT_ENABLED", True):
@@ -175,12 +175,12 @@ def _fake_popen_capture(captured):
 
 
 def test_run_prompt_prefers_profile_home_when_available(monkeypatch, tmp_path):
-    hermes_home = tmp_path / "hermes"
-    profile_home = hermes_home / "home"
+    cortex_home = tmp_path / "athena"
+    profile_home = cortex_home / "home"
     profile_home.mkdir(parents=True)
 
     monkeypatch.delenv("HOME", raising=False)
-    monkeypatch.setenv("HERMES_HOME", str(hermes_home))
+    monkeypatch.setenv("CORTEX_HOME", str(cortex_home))
 
     captured = {}
     client = _make_home_client(tmp_path)
@@ -194,7 +194,7 @@ def test_run_prompt_prefers_profile_home_when_available(monkeypatch, tmp_path):
 
 def test_run_prompt_passes_home_when_parent_env_is_clean(monkeypatch, tmp_path):
     monkeypatch.delenv("HOME", raising=False)
-    monkeypatch.delenv("HERMES_HOME", raising=False)
+    monkeypatch.delenv("CORTEX_HOME", raising=False)
 
     captured = {}
     client = _make_home_client(tmp_path)

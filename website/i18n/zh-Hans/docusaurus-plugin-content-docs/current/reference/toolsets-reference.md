@@ -1,7 +1,7 @@
 ---
 sidebar_position: 4
 title: "工具集参考"
-description: "Hermes 核心、复合、平台及动态工具集参考"
+description: "Athena 核心、复合、平台及动态工具集参考"
 ---
 
 # 工具集参考
@@ -54,7 +54,7 @@ hermes tools                            # curses UI to enable/disable per platfo
 |--------|------|------|
 | `browser` | `browser_back`, `browser_cdp`, `browser_click`, `browser_console`, `browser_dialog`, `browser_get_images`, `browser_navigate`, `browser_press`, `browser_scroll`, `browser_snapshot`, `browser_type`, `browser_vision`, `web_search` | 核心浏览器自动化。包含 `web_search` 作为快速查询的备用方案。`browser_cdp` 和 `browser_dialog` 在运行时受限——仅在会话启动时 CDP 端点可达（通过 `/browser connect`、`browser.cdp_url` 配置、Browserbase 或 Camofox）时才注册。`browser_dialog` 与 `browser_snapshot` 在附加 CDP supervisor 时添加的 `pending_dialogs` 和 `frame_tree` 字段配合使用。 |
 | `clarify` | `clarify` | 当 agent 需要澄清时向用户提问。 |
-| `code_execution` | `execute_code` | 运行以编程方式调用 Hermes 工具的 Python 脚本。 |
+| `code_execution` | `execute_code` | 运行以编程方式调用 Athena 工具的 Python 脚本。 |
 | `cronjob` | `cronjob` | 调度和管理周期性任务。 |
 | `debugging` | 复合（`file` + `terminal` + `web`） | 调试套件——文件、进程/终端、网页提取/搜索。 |
 | `delegation` | `delegate_task` | 生成隔离的子 agent 实例以并行执行工作。 |
@@ -67,7 +67,7 @@ hermes tools                            # curses UI to enable/disable per platfo
 | `computer_use` | `computer_use` | 通过 cua-driver 进行后台 macOS 桌面控制——不抢占光标/焦点。适用于任何支持工具调用的模型。仅限 macOS；需要 `cua-driver` 在 `$PATH` 中。 |
 | `image_gen` | `image_generate` | 通过 FAL.ai 进行文本生成图像（支持可选的 OpenAI / xAI 后端）。 |
 | `video_gen` | `video_generate` | 通过插件注册的后端（xAI Grok-Imagine、FAL.ai Veo 3.1 / Pixverse v6 / Kling O3）进行文本生成视频和图像生成视频。传入 `image_url` 可对图像进行动画化；省略则为文本生成视频。 |
-| `kanban` | `kanban_block`, `kanban_comment`, `kanban_complete`, `kanban_create`, `kanban_heartbeat`, `kanban_link`, `kanban_list`, `kanban_show`, `kanban_unblock` | 多 agent 协调工具。为调度器生成的任务工作者（`HERMES_KANBAN_TASK`）以及显式启用 `kanban` 工具集的 profile 注册。工作者可标记任务完成、阻塞、心跳、评论以及创建/关联后续任务；编排器 profile 还额外获得看板路由工具，如 list/unblock。 |
+| `kanban` | `kanban_block`, `kanban_comment`, `kanban_complete`, `kanban_create`, `kanban_heartbeat`, `kanban_link`, `kanban_list`, `kanban_show`, `kanban_unblock` | 多 agent 协调工具。为调度器生成的任务工作者（`CORTEX_KANBAN_TASK`）以及显式启用 `kanban` 工具集的 profile 注册。工作者可标记任务完成、阻塞、心跳、评论以及创建/关联后续任务；编排器 profile 还额外获得看板路由工具，如 list/unblock。 |
 | `memory` | `memory` | 持久化跨会话记忆管理。 |
 | `messaging` | `send_message` | 在会话中向其他平台（Telegram、Discord 等）发送消息。 |
 | `moa` | `mixture_of_agents` | 通过 Mixture of Agents 实现多模型共识。 |

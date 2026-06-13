@@ -50,7 +50,7 @@ export const es: Translations = {
   },
 
   app: {
-    brand: "Hermes Agent",
+    brand: "Athena Agent",
     brandShort: "HA",
     closeNavigation: "Cerrar navegación",
     closeModelTools: "Cerrar modelo y herramientas",
@@ -337,8 +337,8 @@ export const es: Translations = {
     providersHint:
       "Escribe memory.provider (vacío = incorporado) y context.engine en config.yaml. Surte efecto en la próxima sesión.",
     refreshDashboard: "Volver a escanear extensiones del panel",
-    removeConfirm: "¿Eliminar este complemento de ~/.hermes/plugins/?",
-    removeHint: "Solo se pueden eliminar complementos instalados por el usuario en ~/.hermes/plugins.",
+    removeConfirm: "¿Eliminar este complemento de ~/.cortex/plugins/?",
+    removeHint: "Solo se pueden eliminar complementos instalados por el usuario en ~/.cortex/plugins.",
     rescanHeading: "Registro de complementos SPA",
     rescanHint: "Vuelve a escanear tras añadir archivos en disco para que la barra lateral del panel detecte nuevos manifiestos.",
     runtimeHeading: "Tiempo de ejecución del Gateway (complementos YAML)",
@@ -360,7 +360,7 @@ export const es: Translations = {
     all: "Todas",
     categories: "Categorías",
     filters: "Filtros",
-    noSkills: "No se encontraron habilidades. Las habilidades se cargan desde ~/.hermes/skills/",
+    noSkills: "No se encontraron habilidades. Las habilidades se cargan desde ~/.cortex/skills/",
     noSkillsMatch: "Ninguna habilidad coincide con tu búsqueda o filtro.",
     skillCount: "{count} habilidad{s}",
     resultCount: "{count} resultado{s}",
@@ -374,7 +374,7 @@ export const es: Translations = {
   },
 
   config: {
-    configPath: "~/.hermes/config.yaml",
+    configPath: "~/.cortex/config.yaml",
     filters: "Filtros",
     sections: "Secciones",
     exportConfig: "Exportar configuración como JSON",
@@ -585,7 +585,7 @@ export const es: Translations = {
         "Compartir en X abre una publicación predefinida en una nueva pestaña. Haz clic primero en Copiar imagen si quieres adjuntar la insignia 1200×630: X te permite pegarla directamente en el redactor del tuit. Descargar PNG guarda el archivo para usarlo en cualquier lugar.",
       clipboard_unsupported:
         "Este navegador no admite copiar imágenes al portapapeles: usa Descargar en su lugar.",
-      tweet_text: "Just unlocked {tier_part}\"{name}\" in Hermes Agent ☤",
+      tweet_text: "Just unlocked {tier_part}\"{name}\" in Athena Agent ☤",
     },
   },
   kanban: {

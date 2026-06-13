@@ -361,7 +361,7 @@ class TestBlockingApprovalE2E:
 
     def setup_method(self):
         _clear_approval_state()
-        os.environ.pop("HERMES_YOLO_MODE", None)
+        os.environ.pop("CORTEX_YOLO_MODE", None)
         os.environ.pop("HERMES_INTERACTIVE", None)
         os.environ.pop("HERMES_GATEWAY_SESSION", None)
         os.environ.pop("HERMES_EXEC_ASK", None)

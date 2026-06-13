@@ -1,12 +1,12 @@
-# Hermes Agent - Development Guide
+# Athena Agent - Development Guide
 
-Instructions for AI coding assistants and developers working on the hermes-agent codebase.
+Instructions for AI coding assistants and developers working on the athena-agent codebase.
 
 **Never give up on the right solution.**
 
-## What Hermes Is
+## What Athena Is
 
-Hermes is a personal AI agent that runs the same agent core across a CLI, a
+Athena is a personal AI agent that runs the same agent core across a CLI, a
 messaging gateway (Telegram, Discord, Slack, and ~20 other platforms), a TUI,
 and an Electron desktop app. It learns across sessions (memory + skills),
 delegates to subagents, runs scheduled jobs, and drives a real terminal and
@@ -40,7 +40,7 @@ This is the project's intent layer. Use it two ways:
    job here is to recognize design intent and *avoid wrongly closing a
    legitimate contribution*, not to make the won't-implement call itself.
 
-Read the balance right: Hermes ships a **lot** — most merges are bug fixes to
+Read the balance right: Athena ships a **lot** — most merges are bug fixes to
 real reported behavior, and the product surface (platforms, channels,
 providers, models, desktop/TUI features) expands aggressively and on purpose.
 The restraint below is aimed squarely at the **core agent + the model tool
@@ -84,7 +84,7 @@ conservative at the waist.
 - **E2E validation, not just green unit mocks.** For anything touching
   resolution chains, config propagation, security boundaries, remote
   backends, or file/network I/O, exercise the real path with real imports
-  against a temp `HERMES_HOME`. Mocks hide integration bugs.
+  against a temp `CORTEX_HOME`. Mocks hide integration bugs.
 - **Cache-, alternation-, and invariant-safe.** Preserve prompt caching, strict
   message role alternation (never two same-role messages in a row; never a
   synthetic user message injected mid-loop), and a system prompt that is
@@ -183,7 +183,7 @@ Each rung adds more permanent surface than the one above. Choose the highest
    only appears when a prerequisite is configured. Zero footprint otherwise.
    Examples: Home Assistant tools (gated on token), memory-provider tools.
 4. **Plugin** — third-party/niche/user-specific capability that doesn't ship in
-   core. Lives in `~/.hermes/plugins/` or a pip package, discovered at runtime.
+   core. Lives in `~/.cortex/plugins/` or a pip package, discovered at runtime.
 5. **MCP server (in the catalog)** — if the capability genuinely needs to be a
    tool (structured I/O the agent invokes) but isn't core-fundamental, prefer
    building it as an MCP server and adding it to the MCP catalog over growing
@@ -207,7 +207,7 @@ source .venv/bin/activate   # or: source venv/bin/activate
 ```
 
 `scripts/run_tests.sh` probes `.venv` first, then `venv`, then
-`$HOME/.hermes/hermes-agent/venv` (for worktrees that share a venv with the
+`$HOME/.hermes/athena-agent/venv` (for worktrees that share a venv with the
 main checkout).
 
 ## Project Structure
@@ -217,13 +217,13 @@ The canonical source is the filesystem. The notes call out the load-bearing
 entry points you'll actually edit.
 
 ```
-hermes-agent/
+athena-agent/
 ├── run_agent.py          # AIAgent class — core conversation loop (~12k LOC)
 ├── model_tools.py        # Tool orchestration, discover_builtin_tools(), handle_function_call()
 ├── toolsets.py           # Toolset definitions, _HERMES_CORE_TOOLS list
 ├── cli.py                # HermesCLI class — interactive CLI orchestrator (~11k LOC)
 ├── hermes_state.py       # SessionDB — SQLite session store (FTS5 search)
-├── hermes_constants.py   # get_hermes_home(), display_hermes_home() — profile-aware paths
+├── hermes_constants.py   # get_cortex_home(), display_cortex_home() — profile-aware paths
 ├── hermes_logging.py     # setup_logging() — agent.log / errors.log / gateway.log (profile-aware)
 ├── batch_runner.py       # Parallel batch processing
 ├── agent/                # Agent internals (provider adapters, memory, caching, compression, etc.)
@@ -258,14 +258,14 @@ hermes-agent/
 └── tests/                # Pytest suite (~17k tests across ~900 files as of May 2026)
 ```
 
-**User config:** `~/.hermes/config.yaml` (settings), `~/.hermes/.env` (API keys only).
-**Logs:** `~/.hermes/logs/` — `agent.log` (INFO+), `errors.log` (WARNING+),
-`gateway.log` when running the gateway. Profile-aware via `get_hermes_home()`.
+**User config:** `~/.cortex/config.yaml` (settings), `~/.cortex/.env` (API keys only).
+**Logs:** `~/.cortex/logs/` — `agent.log` (INFO+), `errors.log` (WARNING+),
+`gateway.log` when running the gateway. Profile-aware via `get_cortex_home()`.
 Browse with `hermes logs [--follow] [--level ...] [--session ...]`.
 
 ## TypeScript Style
 
-Applies to TypeScript across Hermes: desktop, TUI, website, and future TS packages.
+Applies to TypeScript across Athena: desktop, TUI, website, and future TS packages.
 
 - Prefer small nanostores over component state when state is shared, reused, or read by distant UI.
 - Let each feature own its atoms. Chat state belongs near chat, shell state near shell, shared state in `src/store`.
@@ -367,7 +367,7 @@ Reasoning content is stored in `assistant_msg["reasoning"]`.
 - `load_cli_config()` in cli.py merges hardcoded defaults + user config YAML
 - **Skin engine** (`hermes_cli/skin_engine.py`) — data-driven CLI theming; initialized from `display.skin` config key at startup; skins customize banner colors, spinner faces/verbs/wings, tool prefix, response box, branding text
 - `process_command()` is a method on `HermesCLI` — dispatches on canonical command name resolved via `resolve_command()` from the central registry
-- Skill slash commands: `agent/skill_commands.py` scans `~/.hermes/skills/`, injects as **user message** (not system prompt) to preserve prompt caching
+- Skill slash commands: `agent/skill_commands.py` scans `~/.cortex/skills/`, injects as **user message** (not system prompt) to preserve prompt caching
 
 ### Slash Command Registry (`hermes_cli/commands.py`)
 
@@ -488,7 +488,7 @@ A **separate** chat surface from both the classic CLI and the dashboard's embedd
 - **The renderer curates via `apps/desktop/src/lib/desktop-slash-commands.ts`.** This is the load-bearing file. It holds `DESKTOP_COMMANDS` (the ~19 built-ins shown in the palette) plus block-lists for terminal-only / messaging-only / picker-owned / settings-owned / advanced commands that should NOT clutter the desktop popover.
   - `isDesktopSlashCommand(name)` — gates **execution**. Returns true for built-ins AND for any non-built-in (skill / quick command), so typed extension commands run.
   - `isDesktopSlashSuggestion(name)` — gates **discovery/completion**. Used by BOTH completion paths in `app/chat/composer/hooks/use-slash-completions.ts` (empty-query catalog filter + typed-query `complete.slash` filter) and by `filterDesktopCommandsCatalog`.
-  - `isDesktopSlashExtensionCommand(name)` — true when the command is NOT a known Hermes built-in (i.e. a skill or user quick command). Both suggestion and catalog-filter paths allow extensions through so skill commands surface in the palette. (Added when fixing "skill commands missing from the desktop slash palette" — the curated allow-list was silently dropping every skill/quick command from completions even though they executed fine when typed.)
+  - `isDesktopSlashExtensionCommand(name)` — true when the command is NOT a known Athena built-in (i.e. a skill or user quick command). Both suggestion and catalog-filter paths allow extensions through so skill commands surface in the palette. (Added when fixing "skill commands missing from the desktop slash palette" — the curated allow-list was silently dropping every skill/quick command from completions even though they executed fine when typed.)
 - **Dispatch** lives in `app/session/hooks/use-prompt-actions.ts` (`runSlash`): built-ins that the desktop owns (`/skin`, `/help`, `/new`, …) are handled locally or via `commands.catalog`; everything else goes to `slash.exec`, falling back to `command.dispatch` (which the gateway resolves into skill / alias / exec directives). A skill command resolves to `{type: "skill", message}` and is submitted as a normal prompt.
 
 **Rule:** the desktop slash palette's curation is about hiding noise (terminal-only / messaging-only built-ins), NOT about hiding user-activated extensions. Skill commands and `quick_commands` are extensions the backend surfaces — they belong in completions. If you tighten `desktop-slash-commands.ts`, keep `isDesktopSlashExtensionCommand` flowing into both the suggestion and catalog-filter paths. Tests: `apps/desktop/src/lib/desktop-slash-commands.test.ts` (run via the repo-root `vitest`, since `apps/desktop` resolves deps from the root workspace install).
@@ -499,14 +499,14 @@ A **separate** chat surface from both the classic CLI and the dashboard's embedd
 
 Before adding any tool, settle the footprint question first (see "The
 Footprint Ladder" in the Contribution Rubric): most capabilities should NOT
-be core tools. For custom or local-only tools, do **not** edit Hermes core.
-Use the plugin route instead: create `~/.hermes/plugins/<name>/plugin.yaml`
-and `~/.hermes/plugins/<name>/__init__.py`, then register tools with
+be core tools. For custom or local-only tools, do **not** edit Athena core.
+Use the plugin route instead: create `~/.cortex/plugins/<name>/plugin.yaml`
+and `~/.cortex/plugins/<name>/__init__.py`, then register tools with
 `ctx.register_tool(...)`. Plugin toolsets are discovered automatically and can be
 enabled or disabled without touching `tools/` or `toolsets.py`.
 
 Use the built-in route below only when the user is explicitly contributing a new
-core Hermes tool that should ship in the base system.
+core Athena tool that should ship in the base system.
 
 Built-in/core tools require changes in **2 files**:
 
@@ -537,9 +537,9 @@ Auto-discovery: any `tools/*.py` file with a top-level `registry.register()` cal
 
 The registry handles schema collection, dispatch, availability checking, and error wrapping. All handlers MUST return a JSON string.
 
-**Path references in tool schemas**: If the schema description mentions file paths (e.g. default output directories), use `display_hermes_home()` to make them profile-aware. The schema is generated at import time, which is after `_apply_profile_override()` sets `HERMES_HOME`.
+**Path references in tool schemas**: If the schema description mentions file paths (e.g. default output directories), use `display_cortex_home()` to make them profile-aware. The schema is generated at import time, which is after `_apply_profile_override()` sets `CORTEX_HOME`.
 
-**State files**: If a tool stores persistent state (caches, logs, checkpoints), use `get_hermes_home()` for the base directory — never `Path.home() / ".hermes"`. This ensures each profile gets its own state.
+**State files**: If a tool stores persistent state (caches, logs, checkpoints), use `get_cortex_home()` for the base directory — never `Path.home() / ".hermes"`. This ensures each profile gets its own state.
 
 **Agent-level tools** (todo, memory): intercepted by `run_agent.py` before `handle_function_call()`. See `tools/todo_tool.py` for the pattern.
 
@@ -640,7 +640,7 @@ The skin engine (`hermes_cli/skin_engine.py`) provides data-driven CLI visual cu
 
 ```
 hermes_cli/skin_engine.py    # SkinConfig dataclass, built-in skins, YAML loader
-~/.hermes/skins/*.yaml       # User-installed custom skins (drop-in)
+~/.cortex/skins/*.yaml       # User-installed custom skins (drop-in)
 ```
 
 - `init_skin_from_config()` — called at CLI startup, reads `display.skin` from config
@@ -672,7 +672,7 @@ hermes_cli/skin_engine.py    # SkinConfig dataclass, built-in skins, YAML loader
 
 ### Built-in skins
 
-- `default` — Classic Hermes gold/kawaii (the current look)
+- `default` — Classic Athena gold/kawaii (the current look)
 - `ares` — Crimson/bronze war-god theme with custom spinner wings
 - `mono` — Clean grayscale monochrome
 - `slate` — Cool blue developer-focused theme
@@ -694,7 +694,7 @@ Add to `_BUILTIN_SKINS` dict in `hermes_cli/skin_engine.py`:
 
 ### User skins (YAML)
 
-Users create `~/.hermes/skins/<name>.yaml`:
+Users create `~/.cortex/skins/<name>.yaml`:
 
 ```yaml
 name: cyberpunk
@@ -723,13 +723,13 @@ Activate with `/skin cyberpunk` or `display.skin: cyberpunk` in config.yaml.
 
 ## Plugins
 
-Hermes has two plugin surfaces. Both live under `plugins/` in the repo so
+Athena has two plugin surfaces. Both live under `plugins/` in the repo so
 repo-shipped plugins can be discovered alongside user-installed ones in
-`~/.hermes/plugins/` and pip-installed entry points.
+`~/.cortex/plugins/` and pip-installed entry points.
 
 ### General plugins (`hermes_cli/plugins.py` + `plugins/<name>/`)
 
-`PluginManager` discovers plugins from `~/.hermes/plugins/`, `./.hermes/plugins/`,
+`PluginManager` discovers plugins from `~/.cortex/plugins/`, `./.hermes/plugins/`,
 and pip entry points. Each plugin exposes a `register(ctx)` function that
 can:
 
@@ -756,7 +756,7 @@ holographic, openviking, retaindb**.
 Each provider implements the `MemoryProvider` ABC (see `agent/memory_provider.py`)
 and is orchestrated by `agent/memory_manager.py`. Lifecycle hooks include
 `sync_turn(turn_messages)`, `prefetch(query)`, `shutdown()`, and optional
-`post_setup(hermes_home, config)` for setup-wizard integration.
+`post_setup(cortex_home, config)` for setup-wizard integration.
 
 **CLI commands via `plugins/memory/<name>/cli.py`:** if a memory plugin
 defines `register_cli(subparser)`, `discover_plugin_cli_commands()` finds
@@ -775,7 +775,7 @@ honcho argparse from `main.py` for exactly this reason.
 **No new in-tree memory providers (policy, May 2026):** the set of
 built-in memory providers under `plugins/memory/` is closed. New memory
 backends must ship as **standalone plugin repos** that users install
-into `~/.hermes/plugins/` (or via pip entry points) — they implement
+into `~/.cortex/plugins/` (or via pip entry points) — they implement
 the same `MemoryProvider` ABC, register through the same discovery
 path, and integrate via `hermes memory setup` / `post_setup()` without
 landing in this tree. PRs that add a new directory under
@@ -794,7 +794,7 @@ discovery system** — scanned on first `get_provider_profile()` or
 
 Scan order:
 1. Bundled: `<repo>/plugins/model-providers/<name>/`
-2. User: `$HERMES_HOME/plugins/model-providers/<name>/`
+2. User: `$CORTEX_HOME/plugins/model-providers/<name>/`
 3. Legacy: `<repo>/providers/<name>.py` (back-compat)
 
 User plugins of the same name override bundled ones — `register_provider()`
@@ -816,7 +816,7 @@ plug into `agent/context_engine.py`; image-gen providers into
 `agent/image_gen_provider.py`. Reference / docs-companion plugins
 (`example-dashboard`, `strike-freedom-cockpit`, `plugin-llm-example`,
 `plugin-llm-async-example`) live in the
-[`hermes-example-plugins`](https://github.com/NousResearch/hermes-example-plugins)
+[`hermes-example-plugins`](https://github.com/dr-shabana/hermes-example-plugins)
 companion repo, not in this tree.
 
 ---
@@ -870,7 +870,7 @@ violate them.
    assert len(m.group(1)) <= 60, len(m.group(1))
    ```
 
-2. **Tools referenced in SKILL.md prose must be native Hermes tools or
+2. **Tools referenced in SKILL.md prose must be native Athena tools or
    MCP servers the skill explicitly expects.** When the skill needs a
    capability, point at the proper tool by name in backticks
    (`` `terminal` ``, `` `web_extract` ``, `` `read_file` ``,
@@ -896,9 +896,9 @@ violate them.
 
 4. **`author` credits the human contributor first.** For external
    contributions, the contributor's real name + GitHub handle goes
-   first; "Hermes Agent" is the secondary collaborator. If the
-   contributor's commit shows "Hermes Agent" as author (because they
-   used Hermes to draft the skill), replace it with their actual name
+   first; "Athena Agent" is the secondary collaborator. If the
+   contributor's commit shows "Athena Agent" as author (because they
+   used Athena to draft the skill), replace it with their actual name
    — credit the human, not the tool.
 
 5. **SKILL.md body uses the modern section order.** `# <Skill> Skill`
@@ -926,7 +926,7 @@ violate them.
    skill's own block must be dropped during salvage.
 
 The full salvage / modernization checklist for external skill PRs
-lives in the `hermes-agent-dev` skill at
+lives in the `athena-agent-dev` skill at
 `references/new-skill-pr-salvage.md` — load it before polishing
 contributor skill PRs.
 
@@ -988,7 +988,7 @@ work that must outlive the current turn, use `cronjob` or
 
 Background skill-maintenance system that tracks usage on agent-created
 skills and auto-archives stale ones. Users never lose skills; archives
-go to `~/.hermes/skills/.archive/` and are restorable.
+go to `~/.cortex/skills/.archive/` and are restorable.
 
 - **Core:** `agent/curator.py` (review loop, auto-transitions, LLM review
   prompt) + `agent/curator_backup.py` (pre-run tar.gz snapshots).
@@ -996,7 +996,7 @@ go to `~/.hermes/skills/.archive/` and are restorable.
   verbs are: `status`, `run`, `pause`, `resume`, `pin`, `unpin`,
   `archive`, `restore`, `prune`, `backup`, `rollback`.
 - **Telemetry:** `tools/skill_usage.py` owns the sidecar
-  `~/.hermes/skills/.usage.json` — per-skill `use_count`, `view_count`,
+  `~/.cortex/skills/.usage.json` — per-skill `use_count`, `view_count`,
   `patch_count`, `last_activity_at`, `state` (active / stale /
   archived), `pinned`.
 
@@ -1043,7 +1043,7 @@ Hardening invariants:
   cannot monopolize the scheduler.
 - Catchup window: half the job's period, clamped to 120s–2h.
 - Grace window: 120s for one-shot jobs whose fire time was missed.
-- File lock at `~/.hermes/cron/.tick.lock` prevents duplicate ticks
+- File lock at `~/.cortex/cron/.tick.lock` prevents duplicate ticks
   across processes.
 - Cron sessions pass `skip_memory=True` by default; memory providers
   intentionally do not run during cron.
@@ -1082,7 +1082,7 @@ kanban task.
 
 Isolation model:
 - **Board** is the hard boundary — workers are spawned with
-  `HERMES_KANBAN_BOARD` pinned in their env so they can't see other
+  `CORTEX_KANBAN_BOARD` pinned in their env so they can't see other
   boards.
 - **Tenant** is a soft namespace *within* a board — one specialist
   fleet can serve multiple businesses with workspace-path + memory-key
@@ -1099,7 +1099,7 @@ Full user-facing docs: `website/docs/user-guide/features/kanban.md`.
 
 ### Prompt Caching Must Not Break
 
-Hermes-Agent ensures caching remains valid throughout a conversation. **Do NOT implement changes that would:**
+Athena-Agent ensures caching remains valid throughout a conversation. **Do NOT implement changes that would:**
 - Alter past context mid-conversation
 - Change toolsets mid-conversation
 - Reload memories or rebuild system prompts mid-conversation
@@ -1127,46 +1127,46 @@ in config.yaml (or `HERMES_BACKGROUND_NOTIFICATIONS` env var):
 
 ## Profiles: Multi-Instance Support
 
-Hermes supports **profiles** — multiple fully isolated instances, each with its own
-`HERMES_HOME` directory (config, API keys, memory, sessions, skills, gateway, etc.).
+Athena supports **profiles** — multiple fully isolated instances, each with its own
+`CORTEX_HOME` directory (config, API keys, memory, sessions, skills, gateway, etc.).
 
 The core mechanism: `_apply_profile_override()` in `hermes_cli/main.py` sets
-`HERMES_HOME` before any module imports. All `get_hermes_home()` references
+`CORTEX_HOME` before any module imports. All `get_cortex_home()` references
 automatically scope to the active profile.
 
 ### Rules for profile-safe code
 
-1. **Use `get_hermes_home()` for all HERMES_HOME paths.** Import from `hermes_constants`.
+1. **Use `get_cortex_home()` for all CORTEX_HOME paths.** Import from `hermes_constants`.
    NEVER hardcode `~/.hermes` or `Path.home() / ".hermes"` in code that reads/writes state.
    ```python
    # GOOD
-   from hermes_constants import get_hermes_home
-   config_path = get_hermes_home() / "config.yaml"
+   from hermes_constants import get_cortex_home
+   config_path = get_cortex_home() / "config.yaml"
 
    # BAD — breaks profiles
    config_path = Path.home() / ".hermes" / "config.yaml"
    ```
 
-2. **Use `display_hermes_home()` for user-facing messages.** Import from `hermes_constants`.
-   This returns `~/.hermes` for default or `~/.hermes/profiles/<name>` for profiles.
+2. **Use `display_cortex_home()` for user-facing messages.** Import from `hermes_constants`.
+   This returns `~/.hermes` for default or `~/.cortex/profiles/<name>` for profiles.
    ```python
    # GOOD
-   from hermes_constants import display_hermes_home
-   print(f"Config saved to {display_hermes_home()}/config.yaml")
+   from hermes_constants import display_cortex_home
+   print(f"Config saved to {display_cortex_home()}/config.yaml")
 
    # BAD — shows wrong path for profiles
-   print("Config saved to ~/.hermes/config.yaml")
+   print("Config saved to ~/.cortex/config.yaml")
    ```
 
-3. **Module-level constants are fine** — they cache `get_hermes_home()` at import time,
-   which is AFTER `_apply_profile_override()` sets the env var. Just use `get_hermes_home()`,
+3. **Module-level constants are fine** — they cache `get_cortex_home()` at import time,
+   which is AFTER `_apply_profile_override()` sets the env var. Just use `get_cortex_home()`,
    not `Path.home() / ".hermes"`.
 
-4. **Tests that mock `Path.home()` must also set `HERMES_HOME`** — since code now uses
-   `get_hermes_home()` (reads env var), not `Path.home() / ".hermes"`:
+4. **Tests that mock `Path.home()` must also set `CORTEX_HOME`** — since code now uses
+   `get_cortex_home()` (reads env var), not `Path.home() / ".hermes"`:
    ```python
    with patch.object(Path, "home", return_value=tmp_path), \
-        patch.dict(os.environ, {"HERMES_HOME": str(tmp_path / ".hermes")}):
+        patch.dict(os.environ, {"CORTEX_HOME": str(tmp_path / ".hermes")}):
        ...
    ```
 
@@ -1176,17 +1176,17 @@ automatically scope to the active profile.
    `disconnect()`/`stop()`. This prevents two profiles from using the same credential.
    See `gateway/platforms/telegram.py` for the canonical pattern.
 
-6. **Profile operations are HOME-anchored, not HERMES_HOME-anchored** — `_get_profiles_root()`
-   returns `Path.home() / ".hermes" / "profiles"`, NOT `get_hermes_home() / "profiles"`.
+6. **Profile operations are HOME-anchored, not CORTEX_HOME-anchored** — `_get_profiles_root()`
+   returns `Path.home() / ".hermes" / "profiles"`, NOT `get_cortex_home() / "profiles"`.
    This is intentional — it lets `hermes -p coder profile list` see all profiles regardless
    of which one is active.
 
 ## Known Pitfalls
 
 ### DO NOT hardcode `~/.hermes` paths
-Use `get_hermes_home()` from `hermes_constants` for code paths. Use `display_hermes_home()`
+Use `get_cortex_home()` from `hermes_constants` for code paths. Use `display_cortex_home()`
 for user-facing print/log messages. Hardcoding `~/.hermes` breaks profiles — each profile
-has its own `HERMES_HOME` directory. This was the source of 5 bugs fixed in PR #3575.
+has its own `CORTEX_HOME` directory. This was the source of 5 bugs fixed in PR #3575.
 
 ### DO NOT introduce new `simple_term_menu` usage
 Existing call sites in `hermes_cli/main.py` remain for legacy fallback only;
@@ -1226,13 +1226,13 @@ red flag.
 ### Don't wire in dead code without E2E validation
 Unused code that was never shipped was dead for a reason. Before wiring an
 unused module into a live code path, E2E test the real resolution chain
-with actual imports (not mocks) against a temp `HERMES_HOME`.
+with actual imports (not mocks) against a temp `CORTEX_HOME`.
 
-### Tests must not write to `~/.hermes/`
-The `_isolate_hermes_home` autouse fixture in `tests/conftest.py` redirects `HERMES_HOME` to a temp dir. Never hardcode `~/.hermes/` paths in tests.
+### Tests must not write to `~/.cortex/`
+The `_isolate_cortex_home` autouse fixture in `tests/conftest.py` redirects `CORTEX_HOME` to a temp dir. Never hardcode `~/.cortex/` paths in tests.
 
 **Profile tests**: When testing profile features, also mock `Path.home()` so that
-`_get_profiles_root()` and `_get_default_hermes_home()` resolve within the temp dir.
+`_get_profiles_root()` and `_get_default_cortex_home()` resolve within the temp dir.
 Use the pattern from `tests/hermes_cli/test_profiles.py`:
 ```python
 @pytest.fixture
@@ -1240,7 +1240,7 @@ def profile_env(tmp_path, monkeypatch):
     home = tmp_path / ".hermes"
     home.mkdir()
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("CORTEX_HOME", str(home))
     return home
 ```
 
@@ -1290,7 +1290,7 @@ Five real sources of local-vs-CI drift the script closes:
 | | Without wrapper | With wrapper |
 |---|---|---|
 | Provider API keys | Whatever is in your env (auto-detects pool) | All `*_API_KEY`/`*_TOKEN`/etc. unset |
-| HOME / `~/.hermes/` | Your real config+auth.json | Temp dir per test |
+| HOME / `~/.cortex/` | Your real config+auth.json | Temp dir per test |
 | Timezone | Local TZ (PDT etc.) | UTC |
 | Locale | Whatever is set | C.UTF-8 |
 | xdist workers | `-n auto` = all cores | `-n auto` (safe — subprocess isolation prevents cross-worker flakes) |

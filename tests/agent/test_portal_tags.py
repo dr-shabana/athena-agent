@@ -4,8 +4,8 @@ from __future__ import annotations
 
 
 def test_hermes_client_tag_includes_current_version():
-    """The client tag must reflect hermes_cli.__version__ verbatim."""
-    from hermes_cli import __version__
+    """The client tag must reflect cortex_cli.__version__ verbatim."""
+    from cortex_cli import __version__
     from agent.portal_tags import hermes_client_tag
 
     assert hermes_client_tag() == f"client=hermes-client-v{__version__}"
@@ -27,7 +27,7 @@ def test_nous_portal_tags_contains_product_and_client():
     from agent.portal_tags import hermes_client_tag, nous_portal_tags
 
     tags = nous_portal_tags()
-    assert "product=hermes-agent" in tags
+    assert "product=athena-agent" in tags
     assert hermes_client_tag() in tags
     assert len(tags) == 2
 

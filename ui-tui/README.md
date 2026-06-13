@@ -1,6 +1,6 @@
-# Hermes TUI
+# Athena TUI
 
-React + Ink terminal UI for Hermes. TypeScript owns the screen. Python owns sessions, tools, model calls, and most command logic.
+React + Ink terminal UI for Athena. TypeScript owns the screen. Python owns sessions, tools, model calls, and most command logic.
 
 ```bash
 hermes --tui
@@ -170,7 +170,7 @@ Notes:
 - Completion requests are debounced by 60 ms. Input starting with `/` uses `complete.slash`. A trailing token that starts with `./`, `../`, `~/`, `/`, or `@` uses `complete.path`.
 - Text pastes are inserted inline directly into the draft. Nothing is newline-flattened.
 - `Cmd/Ctrl+G` (or `Alt+G` in VSCode/Cursor, which intercept the primary keystroke for Find Next) writes the current draft, including any multiline buffer, to a temp file, suspends Ink, launches `$EDITOR`, then restores the TUI and submits the saved text if the editor exits cleanly.
-- Input history is stored in `~/.hermes/.hermes_history` or under `HERMES_HOME`.
+- Input history is stored in `~/.cortex/.hermes_history` or under `CORTEX_HOME`.
 
 ## Rendering
 

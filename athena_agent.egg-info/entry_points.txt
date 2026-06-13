@@ -1,0 +1,3 @@
+[console_scripts]
+athena = cortex_cli.main:main
+athena-acp = acp_adapter.entry:main

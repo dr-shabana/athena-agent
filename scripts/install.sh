@@ -1,12 +1,12 @@
 #!/bin/bash
 # ============================================================================
-# Hermes Agent Installer
+# Athena Agent Installer
 # ============================================================================
 # Installation script for Linux, macOS, and Android/Termux.
 # Uses uv for desktop/server installs and Python's stdlib venv + pip on Termux.
 #
 # Usage:
-#   curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+#   curl -fsSL https://athena-agent.nousresearch.com/install.sh | bash
 #
 # Or with options:
 #   curl -fsSL ... | bash -s -- --no-venv --skip-setup
@@ -43,9 +43,9 @@ NC='\033[0m' # No Color
 BOLD='\033[1m'
 
 # Configuration
-REPO_URL_SSH="git@github.com:NousResearch/hermes-agent.git"
-REPO_URL_HTTPS="https://github.com/NousResearch/hermes-agent.git"
-HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
+REPO_URL_SSH="git@github.com:dr-shabana/athena-agent.git"
+REPO_URL_HTTPS="https://github.com/dr-shabana/athena-agent.git"
+CORTEX_HOME="${CORTEX_HOME:-$HOME/.hermes}"
 # INSTALL_DIR is resolved AFTER arg parsing and OS detection so we can pick an
 # FHS-style layout for root installs.  Track whether the user gave us an
 # explicit directory — if so we never override it.
@@ -60,8 +60,8 @@ PYTHON_VERSION="3.11"
 NODE_VERSION="22"
 
 # FHS-style root install layout (set by resolve_install_layout when applicable):
-#   code at /usr/local/lib/hermes-agent, command at /usr/local/bin/hermes,
-#   data still at /root/.hermes (HERMES_HOME).  Matches Claude Code / Codex CLI
+#   code at /usr/local/lib/athena-agent, command at /usr/local/bin/hermes,
+#   data still at /root/.hermes (CORTEX_HOME).  Matches Claude Code / Codex CLI
 #   and keeps Docker bind-mounted /root/ volumes lean.
 ROOT_FHS_LAYOUT=false
 DETECTED_BROWSER_EXECUTABLE=""
@@ -143,7 +143,7 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         --hermes-home)
-            HERMES_HOME="$2"
+            CORTEX_HOME="$2"
             shift 2
             ;;
         --ensure)
@@ -155,7 +155,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         -h|--help)
-            echo "Hermes Agent Installer"
+            echo "Athena Agent Installer"
             echo ""
             echo "Usage: install.sh [OPTIONS]"
             echo ""
@@ -164,7 +164,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --skip-setup   Skip interactive setup wizard"
             echo "  --skip-browser Skip Playwright/Chromium install (browser tools won't work)"
             echo "  --no-skills    Start with a blank slate — seed no bundled skills, and"
-            echo "                   write \$HERMES_HOME/.no-bundled-skills so future"
+            echo "                   write \$CORTEX_HOME/.no-bundled-skills so future"
             echo "                   'hermes update' runs never inject bundled skills either"
             echo "  --branch NAME  Git branch to install (default: main)"
             echo "  --commit SHA   Pin checkout to a specific commit after clone/update"
@@ -174,19 +174,19 @@ while [[ $# -gt 0 ]]; do
             echo "  --non-interactive  Skip stages that require user input"
             echo "  --include-desktop  Also build the desktop app (apps/desktop -> Hermes.app)"
             echo "  --dir PATH     Installation directory"
-            echo "                   default (non-root):  ~/.hermes/hermes-agent"
-            echo "                   default (root, Linux): /usr/local/lib/hermes-agent"
-            echo "  --hermes-home PATH  Data directory (default: ~/.hermes, or \$HERMES_HOME)"
+            echo "                   default (non-root):  ~/.cortex/athena-agent"
+            echo "                   default (root, Linux): /usr/local/lib/athena-agent"
+            echo "  --hermes-home PATH  Data directory (default: ~/.hermes, or \$CORTEX_HOME)"
             echo "  -h, --help     Show this help"
             echo ""
             echo "Notes:"
             echo "  When running as root on Linux, Hermes installs the code under"
-            echo "  /usr/local/lib/hermes-agent and links the command into"
+            echo "  /usr/local/lib/athena-agent and links the command into"
             echo "  /usr/local/bin/hermes (FHS layout — matches Claude Code / Codex CLI)."
-            echo "  Data, config, sessions, and logs still live in \$HERMES_HOME"
+            echo "  Data, config, sessions, and logs still live in \$CORTEX_HOME"
             echo "  (default /root/.hermes).  This keeps Docker bind-mounted volumes"
             echo "  small and ensures the command is on PATH for all shells."
-            echo "  Existing installs at \$HERMES_HOME/hermes-agent are preserved in-place."
+            echo "  Existing installs at \$CORTEX_HOME/athena-agent are preserved in-place."
             echo "  --ensure DEPS  Install only specified deps (comma-separated)"
             echo "                   Supported: node, browser, ripgrep, ffmpeg"
             echo "                   Does NOT clone repo or create venv"
@@ -210,7 +210,7 @@ print_banner() {
     echo ""
     echo -e "${MAGENTA}${BOLD}"
     echo "┌─────────────────────────────────────────────────────────┐"
-    echo "│             ⚕ Hermes Agent Installer                    │"
+    echo "│             ⚕ Athena Agent Installer                    │"
     echo "├─────────────────────────────────────────────────────────┤"
     echo "│  An open source AI agent by Nous Research.              │"
     echo "└─────────────────────────────────────────────────────────┘"
@@ -268,7 +268,7 @@ emit_manifest() {
     if [ "$INCLUDE_DESKTOP" = true ]; then
         desktop_stage='{"name":"desktop","title":"Build desktop app","category":"runtime","needs_user_input":false},'
     fi
-    printf '%s' '{"protocol_version":1,"stages":[{"name":"prerequisites","title":"System prerequisites","category":"runtime","needs_user_input":false},{"name":"repository","title":"Download Hermes Agent","category":"runtime","needs_user_input":false},{"name":"venv","title":"Create Python virtual environment","category":"runtime","needs_user_input":false},{"name":"python-deps","title":"Install Python dependencies","category":"runtime","needs_user_input":false},{"name":"node-deps","title":"Install browser-tool dependencies","category":"runtime","needs_user_input":false},{"name":"path","title":"Install hermes command","category":"runtime","needs_user_input":false},{"name":"config","title":"Prepare config and skills","category":"configuration","needs_user_input":false},{"name":"setup","title":"Configure API keys and settings","category":"configuration","needs_user_input":true},{"name":"gateway","title":"Configure gateway service","category":"configuration","needs_user_input":true},'"$desktop_stage"'{"name":"complete","title":"Finish install","category":"runtime","needs_user_input":false}]}'
+    printf '%s' '{"protocol_version":1,"stages":[{"name":"prerequisites","title":"System prerequisites","category":"runtime","needs_user_input":false},{"name":"repository","title":"Download Athena Agent","category":"runtime","needs_user_input":false},{"name":"venv","title":"Create Python virtual environment","category":"runtime","needs_user_input":false},{"name":"python-deps","title":"Install Python dependencies","category":"runtime","needs_user_input":false},{"name":"node-deps","title":"Install browser-tool dependencies","category":"runtime","needs_user_input":false},{"name":"path","title":"Install hermes command","category":"runtime","needs_user_input":false},{"name":"config","title":"Prepare config and skills","category":"configuration","needs_user_input":false},{"name":"setup","title":"Configure API keys and settings","category":"configuration","needs_user_input":true},{"name":"gateway","title":"Configure gateway service","category":"configuration","needs_user_input":true},'"$desktop_stage"'{"name":"complete","title":"Finish install","category":"runtime","needs_user_input":false}]}'
     printf '\n'
 }
 
@@ -340,14 +340,14 @@ is_termux() {
 # symlink goes.  Called after detect_os so $OS/$DISTRO are known.
 #
 # Defaults:
-#   - Non-root, any OS:       INSTALL_DIR = $HERMES_HOME/hermes-agent
+#   - Non-root, any OS:       INSTALL_DIR = $CORTEX_HOME/athena-agent
 #                             command link in $HOME/.local/bin
-#   - Termux (any uid):       INSTALL_DIR = $HERMES_HOME/hermes-agent
+#   - Termux (any uid):       INSTALL_DIR = $CORTEX_HOME/athena-agent
 #                             command link in $PREFIX/bin (already on PATH)
-#   - Root on Linux (new):    INSTALL_DIR = /usr/local/lib/hermes-agent
+#   - Root on Linux (new):    INSTALL_DIR = /usr/local/lib/athena-agent
 #                             command link in /usr/local/bin
 #                             (unless a legacy install already exists at
-#                              $HERMES_HOME/hermes-agent — then preserve it)
+#                              $CORTEX_HOME/athena-agent — then preserve it)
 #
 # Always no-op when the user set --dir or $HERMES_INSTALL_DIR.
 resolve_install_layout() {
@@ -356,9 +356,9 @@ resolve_install_layout() {
         return 0
     fi
 
-    # Termux: package manager manages /data/data/..., keep code in HERMES_HOME.
+    # Termux: package manager manages /data/data/..., keep code in CORTEX_HOME.
     if is_termux; then
-        INSTALL_DIR="$HERMES_HOME/hermes-agent"
+        INSTALL_DIR="$CORTEX_HOME/athena-agent"
         return 0
     fi
 
@@ -366,13 +366,13 @@ resolve_install_layout() {
     # macOS root installs keep the legacy layout because /usr/local/ on macOS
     # is Homebrew territory and we don't want to fight that.
     if [ "$OS" = "linux" ] && [ "$(id -u)" -eq 0 ]; then
-        if [ -d "$HERMES_HOME/hermes-agent/.git" ]; then
-            INSTALL_DIR="$HERMES_HOME/hermes-agent"
+        if [ -d "$CORTEX_HOME/athena-agent/.git" ]; then
+            INSTALL_DIR="$CORTEX_HOME/athena-agent"
             log_info "Existing install detected at $INSTALL_DIR — keeping legacy layout"
-            log_info "  (new root installs use /usr/local/lib/hermes-agent)"
+            log_info "  (new root installs use /usr/local/lib/athena-agent)"
             return 0
         fi
-        INSTALL_DIR="/usr/local/lib/hermes-agent"
+        INSTALL_DIR="/usr/local/lib/athena-agent"
         ROOT_FHS_LAYOUT=true
         # Place uv-managed Python under /usr/local/share so the venv interpreter
         # is world-readable.  Default uv paths land in /root/.local/share/uv,
@@ -384,13 +384,13 @@ resolve_install_layout() {
         log_info "Root install on Linux — using FHS layout"
         log_info "  Code:    $INSTALL_DIR"
         log_info "  Command: /usr/local/bin/hermes"
-        log_info "  Data:    $HERMES_HOME (unchanged)"
+        log_info "  Data:    $CORTEX_HOME (unchanged)"
         log_info "  uv Python: $UV_PYTHON_INSTALL_DIR (world-readable)"
         return 0
     fi
 
     # Default: non-root, non-Termux → legacy user-scoped layout.
-    INSTALL_DIR="$HERMES_HOME/hermes-agent"
+    INSTALL_DIR="$CORTEX_HOME/athena-agent"
 }
 
 get_command_link_dir() {
@@ -419,7 +419,7 @@ get_hermes_command_path() {
     if [ -x "$link_dir/hermes" ]; then
         echo "$link_dir/hermes"
     else
-        echo "hermes"
+        echo "athena"
     fi
 }
 
@@ -451,7 +451,7 @@ detect_os() {
             OS="windows"
             DISTRO="windows"
             log_error "Windows detected. Please use the PowerShell installer:"
-            log_info "  iex (irm https://hermes-agent.nousresearch.com/install.ps1)"
+            log_info "  iex (irm https://athena-agent.nousresearch.com/install.ps1)"
             exit 1
             ;;
         *)
@@ -475,11 +475,11 @@ install_uv() {
         return 0
     fi
 
-    # Hermes owns its own uv at $HERMES_HOME/bin/uv.  Always install there —
+    # Hermes owns its own uv at $CORTEX_HOME/bin/uv.  Always install there —
     # no PATH probing, no conda guards, no multi-location resolution chains.
     # The runtime update path (hermes_cli/managed_uv.py) looks in the same
     # place, so install.sh and `hermes update` stay in sync.
-    local _managed_uv="$HERMES_HOME/bin/uv"
+    local _managed_uv="$CORTEX_HOME/bin/uv"
 
     if [ -x "$_managed_uv" ]; then
         UV_CMD="$_managed_uv"
@@ -488,8 +488,8 @@ install_uv() {
         return 0
     fi
 
-    log_info "Installing managed uv into $HERMES_HOME/bin ..."
-    mkdir -p "$HERMES_HOME/bin"
+    log_info "Installing managed uv into $CORTEX_HOME/bin ..."
+    mkdir -p "$CORTEX_HOME/bin"
 
     # Two-stage: download the installer, then run it.  Piping
     # `curl | sh` masks curl failures (sh exits 0 on empty stdin)
@@ -506,8 +506,8 @@ install_uv() {
         exit 1
     fi
     # UV_UNMANAGED_INSTALL tells the astral installer to place the binary
-    # directly into $HERMES_HOME/bin instead of ~/.local/bin.
-    if UV_UNMANAGED_INSTALL="$HERMES_HOME/bin" sh "$_uv_installer" >>"$_uv_install_log" 2>&1; then
+    # directly into $CORTEX_HOME/bin instead of ~/.local/bin.
+    if UV_UNMANAGED_INSTALL="$CORTEX_HOME/bin" sh "$_uv_installer" >>"$_uv_install_log" 2>&1; then
         rm -f "$_uv_installer"
         if [ -x "$_managed_uv" ]; then
             UV_CMD="$_managed_uv"
@@ -729,9 +729,9 @@ check_node() {
     fi
 
     # Prefer a Hermes-managed Node from a previous run over a too-old system one.
-    if [ -x "$HERMES_HOME/node/bin/node" ] && node_satisfies_build "$("$HERMES_HOME/node/bin/node" --version)"; then
-        export PATH="$HERMES_HOME/node/bin:$PATH"
-        log_success "Node.js $("$HERMES_HOME/node/bin/node" --version) found (Hermes-managed)"
+    if [ -x "$CORTEX_HOME/node/bin/node" ] && node_satisfies_build "$("$CORTEX_HOME/node/bin/node" --version)"; then
+        export PATH="$CORTEX_HOME/node/bin:$PATH"
+        log_success "Node.js $("$CORTEX_HOME/node/bin/node" --version) found (Hermes-managed)"
         HAS_NODE=true
         return 0
     fi
@@ -819,7 +819,7 @@ install_node() {
         return 0
     fi
 
-    log_info "Extracting to ~/.hermes/node/..."
+    log_info "Extracting to ~/.cortex/node/..."
     if [[ "$tarball_name" == *.tar.xz ]]; then
         tar xf "$tmp_dir/$tarball_name" -C "$tmp_dir"
     else
@@ -836,26 +836,26 @@ install_node() {
         return 0
     fi
 
-    # Place into ~/.hermes/node/ and symlink binaries into the same bin dir
+    # Place into ~/.cortex/node/ and symlink binaries into the same bin dir
     # the hermes command uses (get_command_link_dir): /usr/local/bin for root
     # FHS installs, $PREFIX/bin on Termux, ~/.local/bin otherwise.
-    rm -rf "$HERMES_HOME/node"
-    mkdir -p "$HERMES_HOME"
-    mv "$extracted_dir" "$HERMES_HOME/node"
+    rm -rf "$CORTEX_HOME/node"
+    mkdir -p "$CORTEX_HOME"
+    mv "$extracted_dir" "$CORTEX_HOME/node"
     rm -rf "$tmp_dir"
 
     local node_link_dir
     node_link_dir="$(get_command_link_dir)"
     mkdir -p "$node_link_dir"
-    ln -sf "$HERMES_HOME/node/bin/node" "$node_link_dir/node"
-    ln -sf "$HERMES_HOME/node/bin/npm"  "$node_link_dir/npm"
-    ln -sf "$HERMES_HOME/node/bin/npx"  "$node_link_dir/npx"
+    ln -sf "$CORTEX_HOME/node/bin/node" "$node_link_dir/node"
+    ln -sf "$CORTEX_HOME/node/bin/npm"  "$node_link_dir/npm"
+    ln -sf "$CORTEX_HOME/node/bin/npx"  "$node_link_dir/npx"
 
-    export PATH="$HERMES_HOME/node/bin:$PATH"
+    export PATH="$CORTEX_HOME/node/bin:$PATH"
 
     local installed_ver
-    installed_ver=$("$HERMES_HOME/node/bin/node" --version 2>/dev/null)
-    log_success "Node.js $installed_ver installed to ~/.hermes/node/"
+    installed_ver=$("$CORTEX_HOME/node/bin/node" --version 2>/dev/null)
+    log_success "Node.js $installed_ver installed to ~/.cortex/node/"
     HAS_NODE=true
 }
 
@@ -1013,7 +1013,7 @@ install_system_packages() {
             if [ "$IS_INTERACTIVE" = true ]; then
                 echo ""
                 log_info "sudo is needed ONLY to install optional system packages (${pkgs[*]}) via your package manager."
-                log_info "Hermes Agent itself does not require or retain root access."
+                log_info "Athena Agent itself does not require or retain root access."
                 if prompt_yes_no "Install ${description}? (requires sudo)" "no"; then
                     if sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a $install_cmd; then
                         [ "$need_ripgrep" = true ] && HAS_RIPGREP=true && log_success "ripgrep installed"
@@ -1029,7 +1029,7 @@ install_system_packages() {
                 # but opening fails with ENXIO. See #16746.
                 echo ""
                 log_info "sudo is needed ONLY to install optional system packages (${pkgs[*]}) via your package manager."
-                log_info "Hermes Agent itself does not require or retain root access."
+                log_info "Athena Agent itself does not require or retain root access."
                 if prompt_yes_no "Install ${description}?" "yes"; then
                     if sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a $install_cmd < /dev/tty; then
                         [ "$need_ripgrep" = true ] && HAS_RIPGREP=true && log_success "ripgrep installed"
@@ -1343,7 +1343,7 @@ install_deps() {
                     log_success "Build tools installed"
                 else
                     log_info "sudo is needed ONLY to install build tools (build-essential, python3-dev, libffi-dev) via apt."
-                    log_info "Hermes Agent itself does not require or retain root access."
+                    log_info "Athena Agent itself does not require or retain root access."
                     if prompt_yes_no "Install build tools?" "yes"; then
                         sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt-get update -qq && sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt-get install -y -qq build-essential python3-dev libffi-dev >/dev/null 2>&1 || true
                         log_success "Build tools installed"
@@ -1434,7 +1434,7 @@ try:
     specs = data["project"]["optional-dependencies"]["all"]
     extras = []
     for s in specs:
-        m = re.search(r"hermes-agent\[([\w-]+)\]", s)
+        m = re.search(r"athena-agent\[([\w-]+)\]", s)
         if m:
             extras.append(m.group(1))
     print(",".join(extras))
@@ -1580,7 +1580,7 @@ EOF
 
         log_info "hermes not on PATH in non-login shells (common on RHEL-family)"
         PATH_LINE='export PATH="/usr/local/bin:$PATH"'
-        PATH_COMMENT='# Hermes Agent — ensure /usr/local/bin is on PATH (RHEL non-login shells)'
+        PATH_COMMENT='# Athena Agent — ensure /usr/local/bin is on PATH (RHEL non-login shells)'
         for SHELL_CONFIG in "$HOME/.bashrc" "$HOME/.bash_profile"; do
             [ -f "$SHELL_CONFIG" ] || continue
             if ! grep -v '^[[:space:]]*#' "$SHELL_CONFIG" 2>/dev/null \
@@ -1637,7 +1637,7 @@ EOF
         for SHELL_CONFIG in "${SHELL_CONFIGS[@]}"; do
             if ! grep -v '^[[:space:]]*#' "$SHELL_CONFIG" 2>/dev/null | grep -qE 'PATH=.*\.local/bin'; then
                 echo "" >> "$SHELL_CONFIG"
-                echo "# Hermes Agent — ensure ~/.local/bin is on PATH" >> "$SHELL_CONFIG"
+                echo "# Athena Agent — ensure ~/.local/bin is on PATH" >> "$SHELL_CONFIG"
                 echo "$PATH_LINE" >> "$SHELL_CONFIG"
                 log_success "Added ~/.local/bin to PATH in $SHELL_CONFIG"
             fi
@@ -1647,7 +1647,7 @@ EOF
         if [ "$IS_FISH" = "true" ]; then
             if ! grep -q 'fish_add_path.*\.local/bin' "$FISH_CONFIG" 2>/dev/null; then
                 echo "" >> "$FISH_CONFIG"
-                echo "# Hermes Agent — ensure ~/.local/bin is on PATH" >> "$FISH_CONFIG"
+                echo "# Athena Agent — ensure ~/.local/bin is on PATH" >> "$FISH_CONFIG"
                 echo 'fish_add_path "$HOME/.local/bin"' >> "$FISH_CONFIG"
                 log_success "Added ~/.local/bin to PATH in $FISH_CONFIG"
             fi
@@ -1671,40 +1671,40 @@ copy_config_templates() {
     log_info "Setting up configuration files..."
 
     # Create ~/.hermes directory structure (config at top level, code in subdir)
-    mkdir -p "$HERMES_HOME"/{cron,sessions,logs,pairing,hooks,image_cache,audio_cache,memories,skills}
+    mkdir -p "$CORTEX_HOME"/{cron,sessions,logs,pairing,hooks,image_cache,audio_cache,memories,skills}
 
-    # Create .env at ~/.hermes/.env (top level, easy to find)
-    if [ ! -f "$HERMES_HOME/.env" ]; then
+    # Create .env at ~/.cortex/.env (top level, easy to find)
+    if [ ! -f "$CORTEX_HOME/.env" ]; then
         if [ -f "$INSTALL_DIR/.env.example" ]; then
-            cp "$INSTALL_DIR/.env.example" "$HERMES_HOME/.env"
-            log_success "Created ~/.hermes/.env from template"
+            cp "$INSTALL_DIR/.env.example" "$CORTEX_HOME/.env"
+            log_success "Created ~/.cortex/.env from template"
         else
-            touch "$HERMES_HOME/.env"
-            log_success "Created ~/.hermes/.env"
+            touch "$CORTEX_HOME/.env"
+            log_success "Created ~/.cortex/.env"
         fi
     else
-        log_info "~/.hermes/.env already exists, keeping it"
+        log_info "~/.cortex/.env already exists, keeping it"
     fi
     # Restrict .env permissions — this file holds API keys and tokens.
     # 0600 ensures only the file owner can read/write, matching standard
     # practice for credential files (.netrc, .aws/credentials, .ssh/config).
-    chmod 600 "$HERMES_HOME/.env"
+    chmod 600 "$CORTEX_HOME/.env"
     configure_browser_env_from_system_browser
 
-    # Create config.yaml at ~/.hermes/config.yaml (top level, easy to find)
-    if [ ! -f "$HERMES_HOME/config.yaml" ]; then
+    # Create config.yaml at ~/.cortex/config.yaml (top level, easy to find)
+    if [ ! -f "$CORTEX_HOME/config.yaml" ]; then
         if [ -f "$INSTALL_DIR/cli-config.yaml.example" ]; then
-            cp "$INSTALL_DIR/cli-config.yaml.example" "$HERMES_HOME/config.yaml"
-            log_success "Created ~/.hermes/config.yaml from template"
+            cp "$INSTALL_DIR/cli-config.yaml.example" "$CORTEX_HOME/config.yaml"
+            log_success "Created ~/.cortex/config.yaml from template"
         fi
     else
-        log_info "~/.hermes/config.yaml already exists, keeping it"
+        log_info "~/.cortex/config.yaml already exists, keeping it"
     fi
 
     # Create SOUL.md if it doesn't exist (global persona file)
-    if [ ! -f "$HERMES_HOME/SOUL.md" ]; then
-        cat > "$HERMES_HOME/SOUL.md" << 'SOUL_EOF'
-# Hermes Agent Persona
+    if [ ! -f "$CORTEX_HOME/SOUL.md" ]; then
+        cat > "$CORTEX_HOME/SOUL.md" << 'SOUL_EOF'
+# Athena Agent Persona
 
 <!--
 This file defines the agent's personality and tone.
@@ -1720,12 +1720,12 @@ This file is loaded fresh each message -- no restart needed.
 Delete the contents (or this file) to use the default personality.
 -->
 SOUL_EOF
-        log_success "Created ~/.hermes/SOUL.md (edit to customize personality)"
+        log_success "Created ~/.cortex/SOUL.md (edit to customize personality)"
     fi
 
-    log_success "Configuration directory ready: ~/.hermes/"
+    log_success "Configuration directory ready: ~/.cortex/"
 
-    # Seed bundled skills into ~/.hermes/skills/ (manifest-based, one-time per skill)
+    # Seed bundled skills into ~/.cortex/skills/ (manifest-based, one-time per skill)
     if [ "$NO_SKILLS" = true ]; then
         # Blank-slate install: write the opt-out marker and skip seeding.
         # skills_sync.py and `hermes update` both honor this marker, so the
@@ -1733,18 +1733,18 @@ SOUL_EOF
         printf '%s\n' \
             "This profile opted out of bundled-skill seeding (installed with --no-skills)." \
             "Delete this file to re-enable sync on the next 'hermes update'." \
-            > "$HERMES_HOME/.no-bundled-skills" 2>/dev/null || true
-        log_info "Skipping bundled skills (--no-skills). Wrote $HERMES_HOME/.no-bundled-skills"
+            > "$CORTEX_HOME/.no-bundled-skills" 2>/dev/null || true
+        log_info "Skipping bundled skills (--no-skills). Wrote $CORTEX_HOME/.no-bundled-skills"
         log_info "  Future 'hermes update' runs will not inject bundled skills. Delete the marker to opt back in."
     else
-        log_info "Syncing bundled skills to ~/.hermes/skills/ ..."
+        log_info "Syncing bundled skills to ~/.cortex/skills/ ..."
         if "$INSTALL_DIR/venv/bin/python" "$INSTALL_DIR/tools/skills_sync.py" 2>/dev/null; then
-            log_success "Skills synced to ~/.hermes/skills/"
+            log_success "Skills synced to ~/.cortex/skills/"
         else
             # Fallback: simple directory copy if Python sync fails
-            if [ -d "$INSTALL_DIR/skills" ] && [ ! "$(ls -A "$HERMES_HOME/skills/" 2>/dev/null | grep -v '.bundled_manifest')" ]; then
-                cp -r "$INSTALL_DIR/skills/"* "$HERMES_HOME/skills/" 2>/dev/null || true
-                log_success "Skills copied to ~/.hermes/skills/"
+            if [ -d "$INSTALL_DIR/skills" ] && [ ! "$(ls -A "$CORTEX_HOME/skills/" 2>/dev/null | grep -v '.bundled_manifest')" ]; then
+                cp -r "$INSTALL_DIR/skills/"* "$CORTEX_HOME/skills/" 2>/dev/null || true
+                log_success "Skills copied to ~/.cortex/skills/"
             fi
         fi
     fi
@@ -1799,7 +1799,7 @@ run_browser_install_with_timeout() {
 }
 
 configure_browser_env_from_system_browser() {
-    local env_file="$HERMES_HOME/.env"
+    local env_file="$CORTEX_HOME/.env"
     local browser_path="${DETECTED_BROWSER_EXECUTABLE:-}"
 
     if [ -z "$browser_path" ]; then
@@ -1810,7 +1810,7 @@ configure_browser_env_from_system_browser() {
         return 0
     fi
 
-    mkdir -p "$HERMES_HOME"
+    mkdir -p "$CORTEX_HOME"
     if [ ! -f "$env_file" ]; then
         touch "$env_file"
     fi
@@ -1822,7 +1822,7 @@ configure_browser_env_from_system_browser() {
 
     {
         echo ""
-        echo "# Hermes Agent browser tools — use the system Chrome/Chromium binary."
+        echo "# Athena Agent browser tools — use the system Chrome/Chromium binary."
         echo "AGENT_BROWSER_EXECUTABLE_PATH=$browser_path"
     } >> "$env_file"
     log_success "Configured browser tools to use $browser_path"
@@ -1990,7 +1990,7 @@ run_setup_wizard() {
 
 maybe_start_gateway() {
     # Check if any messaging platform tokens were configured
-    ENV_FILE="$HERMES_HOME/.env"
+    ENV_FILE="$CORTEX_HOME/.env"
     if [ ! -f "$ENV_FILE" ]; then
         return 0
     fi
@@ -2014,7 +2014,7 @@ maybe_start_gateway() {
 
     # If WhatsApp is enabled and no session exists yet, run foreground first for QR scan
     WHATSAPP_VAL=$(grep "^WHATSAPP_ENABLED=" "$ENV_FILE" 2>/dev/null | cut -d'=' -f2-)
-    WHATSAPP_SESSION="$HERMES_HOME/whatsapp/session/creds.json"
+    WHATSAPP_SESSION="$CORTEX_HOME/whatsapp/session/creds.json"
     if [ "$WHATSAPP_VAL" = "true" ] && [ ! -f "$WHATSAPP_SESSION" ]; then
         if [ "$IS_INTERACTIVE" = true ]; then
             echo ""
@@ -2071,9 +2071,9 @@ maybe_start_gateway() {
             else
                 log_info "systemd not available — starting gateway in background..."
             fi
-            nohup $HERMES_CMD gateway > "$HERMES_HOME/logs/gateway.log" 2>&1 &
+            nohup $HERMES_CMD gateway > "$CORTEX_HOME/logs/gateway.log" 2>&1 &
             GATEWAY_PID=$!
-            log_success "Gateway started (PID $GATEWAY_PID). Logs: ~/.hermes/logs/gateway.log"
+            log_success "Gateway started (PID $GATEWAY_PID). Logs: ~/.cortex/logs/gateway.log"
             log_info "To stop: kill $GATEWAY_PID"
             log_info "To restart later: hermes gateway"
             if [ "$DISTRO" = "termux" ]; then
@@ -2097,9 +2097,9 @@ print_success() {
     # Show file locations
     echo -e "${CYAN}${BOLD}📁 Your files:${NC}"
     echo ""
-    echo -e "   ${YELLOW}Config:${NC}    $HERMES_HOME/config.yaml"
-    echo -e "   ${YELLOW}API Keys:${NC}  $HERMES_HOME/.env"
-    echo -e "   ${YELLOW}Data:${NC}      $HERMES_HOME/cron/, sessions/, logs/"
+    echo -e "   ${YELLOW}Config:${NC}    $CORTEX_HOME/config.yaml"
+    echo -e "   ${YELLOW}API Keys:${NC}  $CORTEX_HOME/.env"
+    echo -e "   ${YELLOW}Data:${NC}      $CORTEX_HOME/cron/, sessions/, logs/"
     echo -e "   ${YELLOW}Code:${NC}      $INSTALL_DIR"
     echo ""
 
@@ -2118,13 +2118,13 @@ print_success() {
     echo -e "${CYAN}─────────────────────────────────────────────────────────${NC}"
     echo ""
     if [ "$DISTRO" = "termux" ]; then
-        echo -e "${YELLOW}⚡ 'hermes' was linked into $(get_command_link_display_dir), which is already on PATH in Termux.${NC}"
+        echo -e "${YELLOW}⚡ 'athena' was linked into $(get_command_link_display_dir), which is already on PATH in Termux.${NC}"
         echo ""
     elif [ "$ROOT_FHS_LAYOUT" = true ]; then
-        echo -e "${YELLOW}⚡ 'hermes' was linked into /usr/local/bin and is ready to use — no shell reload needed.${NC}"
+        echo -e "${YELLOW}⚡ 'athena' was linked into /usr/local/bin and is ready to use — no shell reload needed.${NC}"
         echo ""
     else
-        echo -e "${YELLOW}⚡ Reload your shell to use 'hermes' command:${NC}"
+        echo -e "${YELLOW}⚡ Reload your shell to use 'athena' command:${NC}"
         echo ""
         LOGIN_SHELL="$(basename "${SHELL:-/bin/bash}")"
         if [ "$LOGIN_SHELL" = "zsh" ]; then
@@ -2168,9 +2168,9 @@ print_success() {
 
 ensure_browser() {
     if ! command -v node >/dev/null 2>&1; then
-        local node_bin="$HERMES_HOME/node/bin/node"
+        local node_bin="$CORTEX_HOME/node/bin/node"
         if [ -x "$node_bin" ]; then
-            export PATH="$HERMES_HOME/node/bin:$PATH"
+            export PATH="$CORTEX_HOME/node/bin:$PATH"
         else
             log_error "Node.js not found. Run with --ensure node first."
             return 1
@@ -2178,7 +2178,7 @@ ensure_browser() {
     fi
 
     local npm_bin
-    npm_bin="$(command -v npm 2>/dev/null || echo "$HERMES_HOME/node/bin/npm")"
+    npm_bin="$(command -v npm 2>/dev/null || echo "$CORTEX_HOME/node/bin/npm")"
     if [ ! -x "$npm_bin" ]; then
         log_error "npm not found"
         return 1
@@ -2187,7 +2187,7 @@ ensure_browser() {
     log_info "Installing agent-browser..."
     local log_file
     log_file="$(mktemp)"
-    if ! "$npm_bin" install -g --prefix "$HERMES_HOME/node" --silent --ignore-scripts \
+    if ! "$npm_bin" install -g --prefix "$CORTEX_HOME/node" --silent --ignore-scripts \
         "agent-browser@^0.26.0" \
         "@askjo/camofox-browser@^1.5.2" \
         >"$log_file" 2>&1; then
@@ -2197,7 +2197,7 @@ ensure_browser() {
         return 1
     fi
     rm -f "$log_file"
-    export PATH="$HERMES_HOME/node/bin:$PATH"
+    export PATH="$CORTEX_HOME/node/bin:$PATH"
 
     local sys_browser
     sys_browser="$(find_system_browser 2>/dev/null || true)"
@@ -2208,7 +2208,7 @@ ensure_browser() {
     fi
 
     log_info "Installing Chromium via agent-browser install..."
-    local ab_bin="$HERMES_HOME/node/bin/agent-browser"
+    local ab_bin="$CORTEX_HOME/node/bin/agent-browser"
     if [ -x "$ab_bin" ]; then
         "$ab_bin" install 2>/dev/null || {
             log_warn "Chromium install failed. Browser tools may not work without a system browser."
@@ -2639,7 +2639,7 @@ run_stage_body() {
             resolve_install_layout
             require_install_dir
             # Each stage runs in its own process, so the Hermes-managed Node
-            # provisioned during prerequisites/node-deps (at $HERMES_HOME/node/bin)
+            # provisioned during prerequisites/node-deps (at $CORTEX_HOME/node/bin)
             # isn't on PATH here. check_node re-adds it (or installs if missing)
             # so install_desktop can find npm instead of silently skipping.
             check_node
@@ -2649,7 +2649,7 @@ run_stage_body() {
             detect_os
             resolve_install_layout
             print_success
-            echo "git" > "$HERMES_HOME/.install_method"
+            echo "git" > "$CORTEX_HOME/.install_method"
             ;;
         *)
             log_error "Unknown stage: $stage"
@@ -2728,7 +2728,7 @@ main() {
 
     print_success
 
-    echo "git" > "$HERMES_HOME/.install_method"
+    echo "git" > "$CORTEX_HOME/.install_method"
 }
 
 if [ "$MANIFEST_MODE" = true ]; then

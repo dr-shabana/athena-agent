@@ -6,7 +6,7 @@ description: "How the ACP adapter works: lifecycle, sessions, event bridge, appr
 
 # ACP Internals
 
-The ACP adapter wraps Hermes' synchronous `AIAgent` in an async JSON-RPC stdio server.
+The ACP adapter wraps Athena' synchronous `AIAgent` in an async JSON-RPC stdio server.
 
 Key implementation files:
 
@@ -25,13 +25,13 @@ Key implementation files:
 hermes acp / hermes-acp / python -m acp_adapter
   -> acp_adapter.entry.main()
   -> parse --version / --check / --setup before server startup
-  -> load ~/.hermes/.env
+  -> load ~/.cortex/.env
   -> configure stderr logging
   -> construct HermesACPAgent
   -> acp.run_agent(agent, use_unstable_protocol=True)
 ```
 
-The Zed ACP Registry path launches the same adapter through `uvx --from 'hermes-agent[acp]==<version>' hermes-acp`, pointed at the `hermes-agent` PyPI release.
+The Zed ACP Registry path launches the same adapter through `uvx --from 'athena-agent[acp]==<version>' hermes-acp`, pointed at the `athena-agent` PyPI release.
 
 Stdout is reserved for ACP JSON-RPC transport. Human-readable logs go to stderr.
 
@@ -94,15 +94,15 @@ asyncio.run_coroutine_threadsafe(...)
 
 Mapping:
 
-- `allow_once` -> Hermes `once`
-- `allow_always` -> Hermes `always`
-- reject options -> Hermes `deny`
+- `allow_once` -> Athena `once`
+- `allow_always` -> Athena `always`
+- reject options -> Athena `deny`
 
 Timeouts and bridge failures deny by default.
 
 ### Tool rendering helpers
 
-`acp_adapter/tools.py` maps Hermes tools to ACP tool kinds and builds editor-facing content.
+`acp_adapter/tools.py` maps Athena tools to ACP tool kinds and builds editor-facing content.
 
 Examples:
 
@@ -144,12 +144,12 @@ prompt(..., session_id)
 
 ACP does not implement its own auth store.
 
-Instead it reuses Hermes' runtime resolver:
+Instead it reuses Athena' runtime resolver:
 
 - `acp_adapter/auth.py`
 - `hermes_cli/runtime_provider.py`
 
-So ACP advertises and uses the currently configured Hermes provider/credentials. It also always advertises a terminal setup auth method (`hermes-setup`, args `--setup`) so first-run registry clients can open Hermes' interactive model/provider configuration before starting a normal ACP session.
+So ACP advertises and uses the currently configured Athena provider/credentials. It also always advertises a terminal setup auth method (`hermes-setup`, args `--setup`) so first-run registry clients can open Athena' interactive model/provider configuration before starting a normal ACP session.
 
 ## Working directory binding
 
@@ -172,7 +172,7 @@ ACP temporarily installs an approval callback on the terminal tool during prompt
 
 ## Current limitations
 
-- ACP sessions are persisted to the shared `~/.hermes/state.db` (SessionDB) and transparently restored across process restarts; they appear in `session_search`
+- ACP sessions are persisted to the shared `~/.cortex/state.db` (SessionDB) and transparently restored across process restarts; they appear in `session_search`
 - non-text prompt blocks are currently ignored for request text extraction
 - editor-specific UX varies by ACP client implementation
 

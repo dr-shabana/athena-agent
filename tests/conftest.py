@@ -1,15 +1,15 @@
-"""Shared fixtures for the hermes-agent test suite.
+"""Shared fixtures for the athena-agent test suite.
 
 Hermetic-test invariants enforced here (see AGENTS.md for rationale):
 
 1. **No credential env vars.** All provider/credential-shaped env vars
    (ending in _API_KEY, _TOKEN, _SECRET, _PASSWORD, _CREDENTIALS, etc.)
    are unset before every test. Local developer keys cannot leak in.
-2. **Isolated HERMES_HOME.** HERMES_HOME points to a per-test tempdir so
-   code reading ``~/.hermes/*`` via ``get_hermes_home()`` can't see the
+2. **Isolated CORTEX_HOME.** CORTEX_HOME points to a per-test tempdir so
+   code reading ``~/.cortex/*`` via ``get_cortex_home()`` can't see the
    real one. (We do NOT also redirect HOME — that broke subprocesses in
    CI. Code using ``Path.home() / ".hermes"`` instead of the canonical
-   ``get_hermes_home()`` is a bug to fix at the callsite.)
+   ``get_cortex_home()`` is a bug to fix at the callsite.)
 3. **Deterministic runtime.** TZ=UTC, LANG=C.UTF-8, PYTHONHASHSEED=0.
 4. **No HERMES_SESSION_* inheritance** — the agent's current gateway
    session must not leak into tests.
@@ -169,7 +169,7 @@ def _looks_like_credential(name: str) -> bool:
 # HERMES_* vars that change test behavior by being set. Unset all of these
 # unconditionally — individual tests that need them set do so explicitly.
 _HERMES_BEHAVIORAL_VARS = frozenset({
-    "HERMES_YOLO_MODE",
+    "CORTEX_YOLO_MODE",
     "HERMES_INTERACTIVE",
     "HERMES_QUIET",
     "HERMES_TOOL_PROGRESS",
@@ -194,20 +194,20 @@ _HERMES_BEHAVIORAL_VARS = frozenset({
     "HERMES_CONTAINER",
     "HERMES_EPHEMERAL_SYSTEM_PROMPT",
     "HERMES_TIMEZONE",
-    "HERMES_REDACT_SECRETS",
+    "CORTEX_REDACT_SECRETS",
     "HERMES_BACKGROUND_NOTIFICATIONS",
     "HERMES_EXEC_ASK",
-    "HERMES_HOME_MODE",
+    "CORTEX_HOME_MODE",
     "HERMES_AGENT_USE_LEGACY_SESSION_KEYS",
     # Kanban path/board pins must never leak from a developer shell or
     # dispatched worker into tests; otherwise tests can write fake tasks to
-    # the real ~/.hermes/kanban.db instead of the per-test HERMES_HOME.
+    # the real ~/.cortex/kanban.db instead of the per-test CORTEX_HOME.
     "HERMES_KANBAN_DB",
-    "HERMES_KANBAN_BOARD",
+    "CORTEX_KANBAN_BOARD",
     "HERMES_KANBAN_HOME",
     "HERMES_KANBAN_WORKSPACES_ROOT",
     "HERMES_KANBAN_LOGS_ROOT",
-    "HERMES_KANBAN_TASK",
+    "CORTEX_KANBAN_TASK",
     "HERMES_KANBAN_WORKSPACE",
     "HERMES_KANBAN_RUN_ID",
     "HERMES_KANBAN_CLAIM_LOCK",
@@ -328,8 +328,8 @@ _HERMES_BEHAVIORAL_VARS = frozenset({
 def _hermetic_environment(tmp_path, monkeypatch):
     """Blank out all credential/behavioral env vars so local and CI match.
 
-    Also redirects HOME and HERMES_HOME to per-test tempdirs so code that
-    reads ``~/.hermes/*`` can't touch the real one, and pins TZ/LANG so
+    Also redirects HOME and CORTEX_HOME to per-test tempdirs so code that
+    reads ``~/.cortex/*`` can't touch the real one, and pins TZ/LANG so
     datetime/locale-sensitive tests are deterministic.
     """
     # 1. Blank every credential-shaped env var that's currently set.
@@ -341,23 +341,23 @@ def _hermetic_environment(tmp_path, monkeypatch):
     for name in _HERMES_BEHAVIORAL_VARS:
         monkeypatch.delenv(name, raising=False)
 
-    # 3. Redirect HERMES_HOME to a per-test tempdir. Code that reads
-    #    ``~/.hermes/*`` via ``get_hermes_home()`` now gets the tempdir.
+    # 3. Redirect CORTEX_HOME to a per-test tempdir. Code that reads
+    #    ``~/.cortex/*`` via ``get_cortex_home()`` now gets the tempdir.
     #
     #    NOTE: We do NOT also redirect HOME. Doing so broke CI because
     #    some tests (and their transitive deps) spawn subprocesses that
     #    inherit HOME and expect it to be stable. If a test genuinely
     #    needs HOME isolated, it should set it explicitly in its own
-    #    fixture. Any code in the codebase reading ``~/.hermes/*`` via
-    #    ``Path.home() / ".hermes"`` instead of ``get_hermes_home()``
+    #    fixture. Any code in the codebase reading ``~/.cortex/*`` via
+    #    ``Path.home() / ".hermes"`` instead of ``get_cortex_home()``
     #    is a bug to fix at the callsite.
-    fake_hermes_home = tmp_path / "hermes_test"
-    fake_hermes_home.mkdir()
-    (fake_hermes_home / "sessions").mkdir()
-    (fake_hermes_home / "cron").mkdir()
-    (fake_hermes_home / "memories").mkdir()
-    (fake_hermes_home / "skills").mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(fake_hermes_home))
+    fake_cortex_home = tmp_path / "hermes_test"
+    fake_cortex_home.mkdir()
+    (fake_cortex_home / "sessions").mkdir()
+    (fake_cortex_home / "cron").mkdir()
+    (fake_cortex_home / "memories").mkdir()
+    (fake_cortex_home / "skills").mkdir()
+    monkeypatch.setenv("CORTEX_HOME", str(fake_cortex_home))
 
     # 4. Deterministic locale / timezone / hashseed. CI runs in UTC with
     #    C.UTF-8 locale; local dev often doesn't. Pin everything.
@@ -380,10 +380,10 @@ def _hermetic_environment(tmp_path, monkeypatch):
     monkeypatch.setenv("TIRITH_ENABLED", "false")
 
     # 5. Reset plugin singleton so tests don't leak plugins from
-    #    ~/.hermes/plugins/ (which, per step 3, is now empty — but the
+    #    ~/.cortex/plugins/ (which, per step 3, is now empty — but the
     #    singleton might still be cached from a previous test).
     try:
-        import hermes_cli.plugins as _plugins_mod
+        import cortex_cli.plugins as _plugins_mod
         monkeypatch.setattr(_plugins_mod, "_plugin_manager", None)
     except Exception:
         pass
@@ -396,7 +396,7 @@ def _hermetic_environment(tmp_path, monkeypatch):
 # Backward-compat alias — old tests reference this fixture name. Keep it
 # as a no-op wrapper so imports don't break.
 @pytest.fixture(autouse=True)
-def _isolate_hermes_home(_hermetic_environment):
+def _isolate_cortex_home(_hermetic_environment):
     """Alias preserved for any test that yields this name explicitly."""
     return None
 
@@ -502,7 +502,7 @@ def _ensure_current_event_loop(request):
 # environment and finds the developer's live ``hermes-gateway`` process
 # via ``psutil`` — sending it SIGTERM mid-test. The shutdown forensics in
 # PR #23285 caught this happening 5+ times in 3 days, every time
-# correlated with a ``tests/hermes_cli/`` pytest run starting up.
+# correlated with a ``tests/cortex_cli/`` pytest run starting up.
 #
 # This fixture makes the leak impossible by intercepting the two
 # primitives that actually do damage:
@@ -646,8 +646,8 @@ def _live_system_guard(request, monkeypatch):
     _HERMES_TOKENS = (
         "hermes-gateway",
         "hermes.service",
-        "hermes_cli.main gateway",
-        "hermes_cli/main.py gateway",
+        "cortex_cli.main gateway",
+        "cortex_cli/main.py gateway",
         "gateway/run.py",
         "hermes gateway",
     )
@@ -705,9 +705,9 @@ def _live_system_guard(request, monkeypatch):
                 low = cmd_str.lower()
                 # pkill -f pattern: catch hermes-themed patterns + a
                 # plain "python" -f which would catch the live gateway
-                # whose cmdline contains "python -m hermes_cli.main".
+                # whose cmdline contains "python -m cortex_cli.main".
                 if (
-                    "hermes" in low
+                    "athena" in low
                     or "gateway" in low
                     or ("python" in low and "-f" in tokens)
                 ):
@@ -731,8 +731,8 @@ def _live_system_guard(request, monkeypatch):
                 "Mark with @pytest.mark.live_system_guard_bypass if "
                 "intentional."
             )
-        # Block any subprocess that would run `hermes update` (or the
-        # equivalent `python -m hermes_cli.main update`).  These commands
+        # Block any subprocess that would run `athena update` (or the
+        # equivalent `python -m cortex_cli.main update`).  These commands
         # run `git fetch origin + git pull` against the REAL checkout,
         # overwriting files like pyproject.toml mid-test-run and corrupting
         # every subsequent subprocess that reads them.  The corruption is
@@ -745,10 +745,10 @@ def _live_system_guard(request, monkeypatch):
         low = cmd_str.lower()
         if "update" in low and (
             # hermes update / hermes update --gateway / setsid bash -c ... hermes update
-            ("hermes" in low and "update" in low.split())
+            ("athena" in low and "update" in low.split())
             or
-            # python -m hermes_cli.main update --gateway
-            ("hermes_cli" in low and "update" in low.split())
+            # python -m cortex_cli.main update --gateway
+            ("cortex_cli" in low and "update" in low.split())
             or
             # venv/bin/hermes update  (absolute path variant used in tests)
             (".venv/bin/hermes" in low and "update" in low)
@@ -756,7 +756,7 @@ def _live_system_guard(request, monkeypatch):
             raise RuntimeError(
                 f"tests/conftest.py live-system guard: blocked "
                 f"subprocess.{name}({cmd!r}) — this command would run "
-                "`hermes update` against the real checkout, fetching "
+                "`athena update` against the real checkout, fetching "
                 "from origin and overwriting repo files (e.g. "
                 "pyproject.toml) mid-test-run. This corrupts every "
                 "subsequent subprocess in the same runner. "

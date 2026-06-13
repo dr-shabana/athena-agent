@@ -10,9 +10,9 @@ import os
 import sys
 from pathlib import Path
 
-from hermes_constants import get_hermes_home
+from cortex_constants import get_cortex_home
 from plugins.memory.honcho.client import _host_block, profile_host_key, resolve_active_host, resolve_config_path, HOST
-from hermes_cli.config import cfg_get
+from cortex_cli.config import cfg_get
 
 
 def clone_honcho_for_profile(profile_name: str) -> bool:
@@ -104,7 +104,7 @@ def cmd_enable(args) -> None:
     """Enable Honcho for the active profile."""
     cfg = _read_config()
     host = _host_key()
-    label = f"[{host}] " if host != "hermes" else ""
+    label = f"[{host}] " if host != "athena" else ""
     block = cfg.setdefault("hosts", {}).setdefault(host, {})
 
     if block.get("enabled") is True:
@@ -147,7 +147,7 @@ def cmd_disable(args) -> None:
     """Disable Honcho for the active profile."""
     cfg = _read_config()
     host = _host_key()
-    label = f"[{host}] " if host != "hermes" else ""
+    label = f"[{host}] " if host != "athena" else ""
     block = cfg_get(cfg, "hosts", host, default={})
 
     if not block or block.get("enabled") is False:
@@ -163,11 +163,11 @@ def cmd_disable(args) -> None:
 def cmd_sync(args) -> None:
     """Sync Honcho config to all existing profiles.
 
-    Scans all Hermes profiles and creates host blocks for any that don't
+    Scans all Athena profiles and creates host blocks for any that don't
     have one yet. Inherits settings from the default host block.
     """
     try:
-        from hermes_cli.profiles import list_profiles
+        from cortex_cli.profiles import list_profiles
         profiles = list_profiles()
     except Exception as e:
         print(f"  Could not list profiles: {e}\n")
@@ -209,10 +209,10 @@ def cmd_sync(args) -> None:
 def sync_honcho_profiles_quiet() -> int:
     """Sync Honcho host blocks for all profiles. Returns count of newly created blocks.
 
-    Called from `hermes update` -- no output, no exceptions.
+    Called from `athena update` -- no output, no exceptions.
     """
     try:
-        from hermes_cli.profiles import list_profiles
+        from cortex_cli.profiles import list_profiles
         profiles = list_profiles()
     except Exception:
         return 0
@@ -239,7 +239,7 @@ _profile_override: str | None = None
 
 
 def _host_key() -> str:
-    """Return the active Honcho host key, derived from the current Hermes profile."""
+    """Return the active Honcho host key, derived from the current Athena profile."""
     if _profile_override:
         if _profile_override in {"default", "custom"}:
             return HOST
@@ -255,11 +255,11 @@ def _config_path() -> Path:
 def _local_config_path() -> Path:
     """Return the instance-local Honcho config path for writing.
 
-    Always returns $HERMES_HOME/honcho.json so each profile/instance gets
+    Always returns $CORTEX_HOME/honcho.json so each profile/instance gets
     its own config file.  The global ~/.honcho/config.json is only used as
     a read fallback (via resolve_config_path) for cross-app interop.
     """
-    return get_hermes_home() / "honcho.json"
+    return get_cortex_home() / "honcho.json"
 
 
 def _read_config() -> dict:
@@ -386,7 +386,7 @@ def _prompt(label: str, default: str | None = None, secret: bool = False) -> str
     sys.stdout.flush()
     if secret:
         if sys.stdin.isatty():
-            from hermes_cli.secret_prompt import masked_secret_prompt
+            from cortex_cli.secret_prompt import masked_secret_prompt
             val = masked_secret_prompt("")
         else:
             # Non-TTY (piped input, test runners) — read plaintext
@@ -434,7 +434,7 @@ def cmd_setup(args) -> None:
     write_path = _local_config_path()
     read_path = _config_path()
     print("\nHoncho memory setup\n" + "─" * 40)
-    print("  Honcho gives Hermes persistent cross-session memory.")
+    print("  Honcho gives Athena persistent cross-session memory.")
     print(f"  Config: {write_path}")
     if read_path != write_path and read_path.exists():
         print(f"  (seeding from existing config at {read_path})")
@@ -535,12 +535,12 @@ def cmd_setup(args) -> None:
     if new_peer:
         hermes_host["peerName"] = new_peer
 
-    current_ai = hermes_host.get("aiPeer") or cfg.get("aiPeer", "hermes")
+    current_ai = hermes_host.get("aiPeer") or cfg.get("aiPeer", "athena")
     new_ai = _prompt("AI peer name", default=current_ai)
     if new_ai:
         hermes_host["aiPeer"] = new_ai
 
-    current_workspace = hermes_host.get("workspace") or cfg.get("workspace", "hermes")
+    current_workspace = hermes_host.get("workspace") or cfg.get("workspace", "athena")
     new_workspace = _prompt("Workspace ID", default=current_workspace)
     if new_workspace:
         hermes_host["workspace"] = new_workspace
@@ -776,14 +776,14 @@ def cmd_setup(args) -> None:
 
     # --- Auto-enable Honcho as memory provider in config.yaml ---
     try:
-        from hermes_cli.config import load_config, save_config
+        from cortex_cli.config import load_config, save_config
         hermes_config = load_config()
         hermes_config.setdefault("memory", {})["provider"] = "honcho"
         save_config(hermes_config)
         print("  Memory provider set to 'honcho' in config.yaml")
     except Exception as e:
         print(f"  Could not auto-enable in config.yaml: {e}")
-        print("  Run: hermes config set memory.provider honcho")
+        print("  Run: athena config set memory.provider honcho")
 
     # --- Test connection ---
     print("  Testing connection... ", end="", flush=True)
@@ -821,11 +821,11 @@ def cmd_setup(args) -> None:
 
 
 def _active_profile_name() -> str:
-    """Return the active Hermes profile name (respects --target-profile override)."""
+    """Return the active Athena profile name (respects --target-profile override)."""
     if _profile_override:
         return _profile_override
     try:
-        from hermes_cli.profiles import get_active_profile_name
+        from cortex_cli.profiles import get_active_profile_name
         return get_active_profile_name()
     except Exception:
         return "default"
@@ -837,7 +837,7 @@ def _all_profile_host_configs() -> list[tuple[str, str, dict]]:
     Reads honcho.json once and maps each profile to its host block.
     """
     try:
-        from hermes_cli.profiles import list_profiles
+        from cortex_cli.profiles import list_profiles
         profiles = list_profiles()
     except Exception:
         return [(_active_profile_name(), _host_key(), {})]
@@ -870,7 +870,7 @@ def cmd_status(args) -> None:
     try:
         import honcho  # noqa: F401
     except ImportError:
-        print("  honcho-ai is not installed. Run: hermes honcho setup\n")
+        print("  honcho-ai is not installed. Run: athena honcho setup\n")
         return
 
     cfg = _read_config()
@@ -1103,7 +1103,7 @@ def cmd_peer(args) -> None:
         print(f"  User peer:   {user}")
         print("    Your identity in Honcho. Messages you send build this peer's card.")
         print(f"  AI peer:     {ai}")
-        print("    Hermes' identity in Honcho. Seed with 'hermes honcho identity <file>'.")
+        print("    Athena' identity in Honcho. Seed with 'hermes honcho identity <file>'.")
         print("    Dialectic calls ask this peer questions to warm session context.")
         print()
         print(f"  Dialectic reasoning:  {lvl}  ({', '.join(REASONING_LEVELS)})")
@@ -1111,7 +1111,7 @@ def cmd_peer(args) -> None:
         return
 
     host = _host_key()
-    label = f"[{host}] " if host != "hermes" else ""
+    label = f"[{host}] " if host != "athena" else ""
 
     if user_name is not None:
         cfg.setdefault("hosts", {}).setdefault(host, {})["peerName"] = user_name.strip()
@@ -1164,7 +1164,7 @@ def cmd_mode(args) -> None:
         return
 
     host = _host_key()
-    label = f"[{host}] " if host != "hermes" else ""
+    label = f"[{host}] " if host != "athena" else ""
     cfg.setdefault("hosts", {}).setdefault(host, {})["recallMode"] = mode_arg
     _write_config(cfg)
     print(f"  {label}Recall mode -> {mode_arg}  ({MODES[mode_arg]})\n")
@@ -1199,7 +1199,7 @@ def cmd_strategy(args) -> None:
         return
 
     host = _host_key()
-    label = f"[{host}] " if host != "hermes" else ""
+    label = f"[{host}] " if host != "athena" else ""
     cfg.setdefault("hosts", {}).setdefault(host, {})["sessionStrategy"] = strat_arg
     _write_config(cfg)
     print(f"  {label}Session strategy -> {strat_arg}  ({STRATEGIES[strat_arg]})\n")
@@ -1225,7 +1225,7 @@ def cmd_tokens(args) -> None:
         print("    the user and session, injected directly into the system prompt.")
         print()
         print(f"  Dialectic   {d_chars} chars, reasoning: {d_level}")
-        print("    AI-to-AI inference. Hermes asks Honcho's AI peer a question")
+        print("    AI-to-AI inference. Athena asks Honcho's AI peer a question")
         print("    (e.g. \"what were we working on?\") and Honcho runs its own model")
         print("    to synthesize an answer. Used for first-turn session continuity.")
         print("    Level controls how much reasoning Honcho spends on the answer.")
@@ -1233,7 +1233,7 @@ def cmd_tokens(args) -> None:
         return
 
     host = _host_key()
-    label = f"[{host}] " if host != "hermes" else ""
+    label = f"[{host}] " if host != "athena" else ""
     changed = False
     if context is not None:
         cfg.setdefault("hosts", {}).setdefault(host, {})["contextTokens"] = context
@@ -1324,7 +1324,7 @@ def cmd_identity(args) -> None:
 
 
 def cmd_migrate(args) -> None:
-    """Step-by-step migration guide: OpenClaw native memory → Hermes + Honcho."""
+    """Step-by-step migration guide: OpenClaw native memory → Athena + Honcho."""
     from pathlib import Path
 
     # ── Detect OpenClaw native memory files ──────────────────────────────────
@@ -1352,7 +1352,7 @@ def cmd_migrate(args) -> None:
     cfg = _read_config()
     has_key = bool(_resolve_api_key(cfg))
 
-    print("\nHoncho migration: OpenClaw native memory → Hermes\n" + "─" * 50)
+    print("\nHoncho migration: OpenClaw native memory → Athena\n" + "─" * 50)
     print()
     print("  OpenClaw's native memory stores context in local markdown files")
     print("  (USER.md, MEMORY.md, SOUL.md, ...) and injects them via QMD search.")
@@ -1369,7 +1369,7 @@ def cmd_migrate(args) -> None:
         print(f"  Honcho API key already configured: {masked}")
         print("  Skip to Step 2.")
     else:
-        print("  Honcho is a cloud memory service that gives Hermes persistent memory")
+        print("  Honcho is a cloud memory service that gives Athena persistent memory")
         print("  across sessions. You need an API key to use it.")
         print()
         print("  1. Get your API key at https://app.honcho.dev")
@@ -1414,9 +1414,9 @@ def cmd_migrate(args) -> None:
     if user_files:
         print(f"  Found: {', '.join(f.name for f in user_files)}")
         print()
-        print("  These are picked up automatically the first time you run 'hermes'")
+        print("  These are picked up automatically the first time you run 'athena'")
         print("  with Honcho configured and no prior session history.")
-        print("  (Hermes calls migrate_memory_files() on first session init.)")
+        print("  (Athena calls migrate_memory_files() on first session init.)")
         print()
         print("  If you want to migrate them now without starting a session:")
         for f in user_files:
@@ -1463,7 +1463,7 @@ def cmd_migrate(args) -> None:
     print("  agent's character, capabilities, and behavioral rules. In OpenClaw")
     print("  these are injected via file search at prompt-build time.")
     print()
-    print("  In Hermes, they are seeded once into Honcho's AI peer through the")
+    print("  In Athena, they are seeded once into Honcho's AI peer through the")
     print("  observation pipeline. Honcho builds a representation from them and")
     print("  from every subsequent assistant message (observe_me=True). Over time")
     print("  the representation reflects actual behavior, not just declaration.")
@@ -1510,17 +1510,17 @@ def cmd_migrate(args) -> None:
     print()
     print("  Storage")
     print("    OpenClaw: markdown files on disk, searched via QMD at prompt-build time.")
-    print("    Hermes:   cloud-backed Honcho peers. Files can stay on disk as source")
+    print("    Athena:   cloud-backed Honcho peers. Files can stay on disk as source")
     print("              of truth; Honcho holds the live representation.")
     print()
     print("  Context injection")
     print("    OpenClaw: file excerpts injected synchronously before each LLM call.")
-    print("    Hermes:   Honcho context fetched async at turn end, injected next turn.")
+    print("    Athena:   Honcho context fetched async at turn end, injected next turn.")
     print("              First turn has no Honcho context; subsequent turns are loaded.")
     print()
     print("  Memory growth")
     print("    OpenClaw: you edit files manually to update memory.")
-    print("    Hermes:   Honcho observes every message and updates representations")
+    print("    Athena:   Honcho observes every message and updates representations")
     print("              automatically. Files become the seed, not the live store.")
     print()
     print("  Honcho tools (available to the agent during conversation)")
@@ -1532,7 +1532,7 @@ def cmd_migrate(args) -> None:
     print()
     print("  Session naming")
     print("    OpenClaw: no persistent session concept — files are global.")
-    print("    Hermes:   per-session by default — each run gets its own session")
+    print("    Athena:   per-session by default — each run gets its own session")
     print("              Map a custom name:  hermes honcho map <session-name>")
 
     # ── Step 6: Next steps ────────────────────────────────────────────────────
@@ -1562,7 +1562,7 @@ def honcho_command(args) -> None:
         # Redirect to memory setup — honcho setup goes through the unified path
         print("\n  Honcho is configured via the memory provider system.")
         print("  Running 'hermes memory setup'...\n")
-        from hermes_cli.memory_setup import cmd_setup_provider
+        from cortex_cli.memory_setup import cmd_setup_provider
         cmd_setup_provider("honcho")
         return
     elif sub is None:
@@ -1599,10 +1599,10 @@ def honcho_command(args) -> None:
 
 
 def register_cli(subparser) -> None:
-    """Build the ``hermes honcho`` argparse subcommand tree.
+    """Build the ``athena honcho`` argparse subcommand tree.
 
     Called by the plugin CLI registration system during argparse setup.
-    The *subparser* is the parser for ``hermes honcho``.
+    The *subparser* is the parser for ``athena honcho``.
     """
 
     subparser.add_argument(
@@ -1689,7 +1689,7 @@ def register_cli(subparser) -> None:
 
     subs.add_parser(
         "migrate",
-        help="Step-by-step migration guide from openclaw-honcho to Hermes Honcho",
+        help="Step-by-step migration guide from openclaw-honcho to Athena Honcho",
     )
     subs.add_parser("enable", help="Enable Honcho for the active profile")
     subs.add_parser("disable", help="Disable Honcho for the active profile")

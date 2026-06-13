@@ -9,8 +9,8 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
-from hermes_constants import reset_hermes_home_override, set_hermes_home_override
-from hermes_cli.active_sessions import active_session_registry_snapshot
+from cortex_constants import reset_cortex_home_override, set_cortex_home_override
+from cortex_cli.active_sessions import active_session_registry_snapshot
 from tui_gateway import server
 
 
@@ -18,7 +18,7 @@ def test_session_create_rejects_at_active_session_limit(monkeypatch, tmp_path):
     home = tmp_path / ".hermes"
     home.mkdir()
     (home / "config.yaml").write_text("max_concurrent_sessions: 1\n", encoding="utf-8")
-    token = set_hermes_home_override(home)
+    token = set_cortex_home_override(home)
 
     def _clear_server_sessions():
         for session in list(server._sessions.values()):
@@ -39,7 +39,7 @@ def test_session_create_rejects_at_active_session_limit(monkeypatch, tmp_path):
 
         second = server._methods["session.create"]("r2", {"cols": 80})
         assert second["error"]["message"] == (
-            "Hermes is at the active session limit (1/1). "
+            "Athena is at the active session limit (1/1). "
             "Try again when another session finishes."
         )
         assert list(server._sessions) == [sid]
@@ -55,7 +55,7 @@ def test_session_create_rejects_at_active_session_limit(monkeypatch, tmp_path):
         server._cfg_cache = None
         server._cfg_mtime = None
         server._cfg_path = None
-        reset_hermes_home_override(token)
+        reset_cortex_home_override(token)
 
 
 def test_session_context_uses_session_cwd(monkeypatch, tmp_path):
@@ -500,7 +500,7 @@ def test_voice_record_start_handles_non_dict_voice_cfg(monkeypatch):
 
     monkeypatch.setitem(
         sys.modules,
-        "hermes_cli.voice",
+        "cortex_cli.voice",
         types.SimpleNamespace(
             start_continuous=fake_start_continuous, stop_continuous=lambda: None
         ),
@@ -565,7 +565,7 @@ def test_voice_record_stop_forces_transcription(monkeypatch):
 
     monkeypatch.setitem(
         sys.modules,
-        "hermes_cli.voice",
+        "cortex_cli.voice",
         types.SimpleNamespace(
             start_continuous=lambda **_kwargs: None,
             stop_continuous=fake_stop_continuous,
@@ -587,7 +587,7 @@ def test_voice_record_stop_forces_transcription(monkeypatch):
 def test_voice_record_stop_updates_event_session_id(monkeypatch):
     monkeypatch.setitem(
         sys.modules,
-        "hermes_cli.voice",
+        "cortex_cli.voice",
         types.SimpleNamespace(
             start_continuous=lambda **_kwargs: True,
             stop_continuous=lambda **_kwargs: None,
@@ -610,7 +610,7 @@ def test_voice_record_stop_updates_event_session_id(monkeypatch):
 def test_voice_record_start_reports_busy_when_stop_is_in_progress(monkeypatch):
     monkeypatch.setitem(
         sys.modules,
-        "hermes_cli.voice",
+        "cortex_cli.voice",
         types.SimpleNamespace(
             start_continuous=lambda **_kwargs: False,
             stop_continuous=lambda **_kwargs: None,
@@ -672,7 +672,7 @@ def test_load_enabled_toolsets_filters_invalid_tui_env(monkeypatch, capsys):
     monkeypatch.setenv("HERMES_TUI_TOOLSETS", "web, nope")
     monkeypatch.setitem(
         sys.modules,
-        "hermes_cli.plugins",
+        "cortex_cli.plugins",
         types.SimpleNamespace(discover_plugins=lambda: None),
     )
 
@@ -694,7 +694,7 @@ def test_load_enabled_toolsets_accepts_plugin_env_after_discovery(monkeypatch):
     monkeypatch.setattr(toolsets, "validate_toolset", fake_validate)
     monkeypatch.setitem(
         sys.modules,
-        "hermes_cli.plugins",
+        "cortex_cli.plugins",
         types.SimpleNamespace(
             discover_plugins=lambda: discovered.update({"ready": True})
         ),
@@ -707,11 +707,11 @@ def test_load_enabled_toolsets_rejects_disabled_mcp_env(monkeypatch, capsys):
     monkeypatch.setenv("HERMES_TUI_TOOLSETS", "mcp-off")
     monkeypatch.setitem(
         sys.modules,
-        "hermes_cli.plugins",
+        "cortex_cli.plugins",
         types.SimpleNamespace(discover_plugins=lambda: None),
     )
 
-    import hermes_cli.config as config_mod
+    import cortex_cli.config as config_mod
 
     monkeypatch.setattr(
         config_mod,
@@ -736,11 +736,11 @@ def test_load_enabled_toolsets_falls_back_when_tui_env_invalid(monkeypatch, caps
     monkeypatch.setenv("HERMES_TUI_TOOLSETS", "nope")
     monkeypatch.setitem(
         sys.modules,
-        "hermes_cli.plugins",
+        "cortex_cli.plugins",
         types.SimpleNamespace(discover_plugins=lambda: None),
     )
 
-    import hermes_cli.config as config_mod
+    import cortex_cli.config as config_mod
 
     monkeypatch.setattr(
         config_mod, "load_config", lambda: {"platform_toolsets": {"cli": ["memory"]}}
@@ -754,11 +754,11 @@ def test_load_enabled_toolsets_warns_when_config_fallback_fails(monkeypatch, cap
     monkeypatch.setenv("HERMES_TUI_TOOLSETS", "nope")
     monkeypatch.setitem(
         sys.modules,
-        "hermes_cli.plugins",
+        "cortex_cli.plugins",
         types.SimpleNamespace(discover_plugins=lambda: None),
     )
 
-    import hermes_cli.config as config_mod
+    import cortex_cli.config as config_mod
 
     monkeypatch.setattr(
         config_mod, "load_config", lambda: (_ for _ in ()).throw(RuntimeError("boom"))
@@ -771,7 +771,7 @@ def test_load_enabled_toolsets_warns_when_config_fallback_fails(monkeypatch, cap
 def test_load_enabled_toolsets_honors_builtin_env_if_config_fails(monkeypatch):
     monkeypatch.setenv("HERMES_TUI_TOOLSETS", "web")
 
-    import hermes_cli.config as config_mod
+    import cortex_cli.config as config_mod
 
     monkeypatch.setattr(
         config_mod, "load_config", lambda: (_ for _ in ()).throw(RuntimeError("boom"))
@@ -799,11 +799,11 @@ def test_load_enabled_toolsets_reports_disabled_mcp_separately(monkeypatch, caps
     monkeypatch.setenv("HERMES_TUI_TOOLSETS", "web,mcp-off,nope")
     monkeypatch.setitem(
         sys.modules,
-        "hermes_cli.plugins",
+        "cortex_cli.plugins",
         types.SimpleNamespace(discover_plugins=lambda: None),
     )
 
-    import hermes_cli.config as config_mod
+    import cortex_cli.config as config_mod
 
     monkeypatch.setattr(
         config_mod,
@@ -1282,7 +1282,7 @@ def test_startup_runtime_does_not_treat_inference_provider_as_explicit(monkeypat
     monkeypatch.delenv("HERMES_TUI_PROVIDER", raising=False)
     monkeypatch.setenv("HERMES_INFERENCE_PROVIDER", "nous")
     monkeypatch.setattr(
-        "hermes_cli.models.detect_static_provider_for_model",
+        "cortex_cli.models.detect_static_provider_for_model",
         lambda model, provider: None,
     )
 
@@ -1301,7 +1301,7 @@ def test_startup_runtime_detects_provider_for_model_env(monkeypatch):
         return "anthropic", "anthropic/claude-sonnet-4.6"
 
     monkeypatch.setattr(
-        "hermes_cli.models.detect_static_provider_for_model", fake_detect
+        "cortex_cli.models.detect_static_provider_for_model", fake_detect
     )
 
     assert server._resolve_startup_runtime() == (
@@ -1311,7 +1311,7 @@ def test_startup_runtime_detects_provider_for_model_env(monkeypatch):
 
 
 def test_load_fallback_model_merges_chain_providers_first(monkeypatch):
-    # Parity with HermesCLI / gateway: fallback_providers stays first and keeps
+    # Parity with AthenaCLI / gateway: fallback_providers stays first and keeps
     # its order, with any distinct legacy fallback_model entry merged in after
     # (deduped on provider/model/base_url).
     fallback_chain = [
@@ -1356,7 +1356,7 @@ def test_make_agent_passes_configured_fallback_chain(monkeypatch):
         },
     )
     monkeypatch.setattr(
-        "hermes_cli.runtime_provider.resolve_runtime_provider",
+        "cortex_cli.runtime_provider.resolve_runtime_provider",
         lambda requested=None, target_model=None: {
             "provider": "openai-codex",
             "base_url": "https://chatgpt.com/backend-api/codex",
@@ -1425,7 +1425,7 @@ def test_startup_runtime_resolves_short_alias_without_network(monkeypatch):
     monkeypatch.delenv("HERMES_INFERENCE_PROVIDER", raising=False)
     monkeypatch.setattr(server, "_load_cfg", lambda: {"model": {"provider": "auto"}})
     monkeypatch.setattr(
-        "hermes_cli.models.fetch_openrouter_models",
+        "cortex_cli.models.fetch_openrouter_models",
         lambda *_args, **_kwargs: (_ for _ in ()).throw(
             AssertionError("network lookup should not run")
         ),
@@ -1443,7 +1443,7 @@ def test_startup_runtime_does_not_call_network_detector(monkeypatch):
     monkeypatch.delenv("HERMES_INFERENCE_PROVIDER", raising=False)
     monkeypatch.setattr(server, "_load_cfg", lambda: {"model": {"provider": "auto"}})
     monkeypatch.setattr(
-        "hermes_cli.models.detect_provider_for_model",
+        "cortex_cli.models.detect_provider_for_model",
         lambda *_args, **_kwargs: (_ for _ in ()).throw(
             AssertionError("network detector called")
         ),
@@ -2074,7 +2074,7 @@ def test_config_set_yolo_global_scope_writes_approvals_mode(tmp_path, monkeypatc
 
     cfg_path = tmp_path / "config.yaml"
     cfg_path.write_text(yaml.safe_dump({"approvals": {"mode": "manual"}}))
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_cortex_home", tmp_path)
 
     resp_on = server.handle_request(
         {
@@ -2104,7 +2104,7 @@ def test_config_set_yolo_global_scope_honors_explicit_value(tmp_path, monkeypatc
 
     cfg_path = tmp_path / "config.yaml"
     cfg_path.write_text(yaml.safe_dump({"approvals": {"mode": "manual"}}))
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_cortex_home", tmp_path)
 
     resp = server.handle_request(
         {
@@ -2144,7 +2144,7 @@ def test_config_set_fast_updates_live_agent_and_config(monkeypatch):
     monkeypatch.setattr(server, "_session_info", lambda _agent, *a: {"model": "x"})
     monkeypatch.setattr(server, "_emit", lambda *args: emits.append(args))
     monkeypatch.setattr(
-        "hermes_cli.models.resolve_fast_mode_overrides",
+        "cortex_cli.models.resolve_fast_mode_overrides",
         lambda _model_id: {"service_tier": "priority"},
     )
 
@@ -2219,7 +2219,7 @@ def test_config_set_fast_rejects_unsupported_model(monkeypatch):
         server, "_write_config_key", lambda path, value: writes.append((path, value))
     )
     monkeypatch.setattr(
-        "hermes_cli.models.resolve_fast_mode_overrides",
+        "cortex_cli.models.resolve_fast_mode_overrides",
         lambda _model_id: None,
     )
 
@@ -2299,7 +2299,7 @@ def test_config_busy_get_and_set(monkeypatch):
 
 
 def test_config_set_yolo_process_scope_treats_false_like_env_as_disabled(monkeypatch):
-    monkeypatch.setenv("HERMES_YOLO_MODE", "false")
+    monkeypatch.setenv("CORTEX_YOLO_MODE", "false")
 
     resp = server.handle_request(
         {
@@ -2310,7 +2310,7 @@ def test_config_set_yolo_process_scope_treats_false_like_env_as_disabled(monkeyp
     )
 
     assert resp["result"]["value"] == "1"
-    assert os.environ.get("HERMES_YOLO_MODE") == "1"
+    assert os.environ.get("CORTEX_YOLO_MODE") == "1"
 
 
 def test_config_get_statusbar_survives_non_dict_display(monkeypatch):
@@ -2338,7 +2338,7 @@ def test_config_set_statusbar_survives_non_dict_display(tmp_path, monkeypatch):
 
     cfg_path = tmp_path / "config.yaml"
     cfg_path.write_text(yaml.safe_dump({"display": "broken"}))
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_cortex_home", tmp_path)
 
     resp = server.handle_request(
         {
@@ -2362,7 +2362,7 @@ def test_config_set_details_mode_pins_all_sections(tmp_path, monkeypatch):
             {"display": {"sections": {"tools": "expanded", "activity": "hidden"}}}
         )
     )
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_cortex_home", tmp_path)
 
     resp = server.handle_request(
         {
@@ -2387,7 +2387,7 @@ def test_config_set_section_writes_per_section_override(tmp_path, monkeypatch):
     import yaml
 
     cfg_path = tmp_path / "config.yaml"
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_cortex_home", tmp_path)
 
     resp = server.handle_request(
         {
@@ -2411,7 +2411,7 @@ def test_config_set_section_clears_override_on_empty_value(tmp_path, monkeypatch
             {"display": {"sections": {"activity": "hidden", "tools": "expanded"}}}
         )
     )
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_cortex_home", tmp_path)
 
     resp = server.handle_request(
         {
@@ -2427,7 +2427,7 @@ def test_config_set_section_clears_override_on_empty_value(tmp_path, monkeypatch
 
 
 def test_config_set_section_rejects_unknown_section_or_mode(tmp_path, monkeypatch):
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_cortex_home", tmp_path)
 
     bad_section = server.handle_request(
         {
@@ -2540,7 +2540,7 @@ def test_enable_gateway_prompts_sets_gateway_env(monkeypatch):
 
 
 def test_setup_status_reports_provider_config(monkeypatch):
-    monkeypatch.setattr("hermes_cli.main._has_any_provider_configured", lambda: False)
+    monkeypatch.setattr("cortex_cli.main._has_any_provider_configured", lambda: False)
 
     resp = server.handle_request({"id": "1", "method": "setup.status", "params": {}})
 
@@ -2548,9 +2548,9 @@ def test_setup_status_reports_provider_config(monkeypatch):
 
 
 def test_setup_runtime_check_rejects_empty_runtime_key(monkeypatch):
-    monkeypatch.setattr("hermes_cli.main._has_any_provider_configured", lambda: True)
+    monkeypatch.setattr("cortex_cli.main._has_any_provider_configured", lambda: True)
     monkeypatch.setattr(
-        "hermes_cli.runtime_provider.resolve_runtime_provider",
+        "cortex_cli.runtime_provider.resolve_runtime_provider",
         lambda requested=None: {
             "provider": "openrouter",
             "api_key": "",
@@ -2565,9 +2565,9 @@ def test_setup_runtime_check_rejects_empty_runtime_key(monkeypatch):
 
 
 def test_setup_runtime_check_allows_no_key_custom_runtime(monkeypatch):
-    monkeypatch.setattr("hermes_cli.main._has_any_provider_configured", lambda: True)
+    monkeypatch.setattr("cortex_cli.main._has_any_provider_configured", lambda: True)
     monkeypatch.setattr(
-        "hermes_cli.runtime_provider.resolve_runtime_provider",
+        "cortex_cli.runtime_provider.resolve_runtime_provider",
         lambda requested=None: {
             "provider": "custom",
             "api_key": "no-key-required",
@@ -2582,9 +2582,9 @@ def test_setup_runtime_check_allows_no_key_custom_runtime(monkeypatch):
 
 
 def test_setup_runtime_check_rejects_implicit_bedrock_when_unconfigured(monkeypatch):
-    monkeypatch.setattr("hermes_cli.main._has_any_provider_configured", lambda: False)
+    monkeypatch.setattr("cortex_cli.main._has_any_provider_configured", lambda: False)
     monkeypatch.setattr(
-        "hermes_cli.runtime_provider.resolve_runtime_provider",
+        "cortex_cli.runtime_provider.resolve_runtime_provider",
         lambda requested=None: {
             "provider": "bedrock",
             "api_key": "aws-sdk",
@@ -2673,7 +2673,7 @@ def test_complete_slash_details_args():
 
 
 def test_config_set_reasoning_updates_live_session_and_agent(tmp_path, monkeypatch):
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_cortex_home", tmp_path)
     agent = types.SimpleNamespace(reasoning_config=None)
     server._sessions["sid"] = _session(agent=agent)
 
@@ -2711,7 +2711,7 @@ def test_config_set_reasoning_updates_live_session_and_agent(tmp_path, monkeypat
 
 
 def test_config_set_verbose_updates_session_mode_and_agent(tmp_path, monkeypatch):
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_cortex_home", tmp_path)
     agent = types.SimpleNamespace(verbose_logging=False)
     server._sessions["sid"] = _session(agent=agent)
 
@@ -2821,7 +2821,7 @@ def test_config_set_model_requires_confirmation_for_expensive_model(monkeypatch)
     agent = _Agent()
     server._sessions["sid"] = _session(agent=agent)
     monkeypatch.setattr(
-        "hermes_cli.model_switch.switch_model", lambda **_kwargs: result
+        "cortex_cli.model_switch.switch_model", lambda **_kwargs: result
     )
     monkeypatch.setattr(server, "_restart_slash_worker", lambda sid, session: None)
     monkeypatch.setattr(server, "_emit", lambda *args, **kwargs: None)
@@ -2887,10 +2887,10 @@ def test_config_set_model_global_persists(monkeypatch):
         return result
 
     server._sessions["sid"] = _session(agent=_Agent())
-    monkeypatch.setattr("hermes_cli.model_switch.switch_model", _switch_model)
+    monkeypatch.setattr("cortex_cli.model_switch.switch_model", _switch_model)
     monkeypatch.setattr(server, "_restart_slash_worker", lambda sid, session: None)
     monkeypatch.setattr(server, "_emit", lambda *args, **kwargs: None)
-    monkeypatch.setattr("hermes_cli.config.save_config", lambda cfg: saved.update(cfg))
+    monkeypatch.setattr("cortex_cli.config.save_config", lambda cfg: saved.update(cfg))
 
     resp = server.handle_request(
         {
@@ -2945,7 +2945,7 @@ def test_config_set_model_does_not_leak_inference_provider_env(monkeypatch):
     server._sessions["sid"] = session
     monkeypatch.setenv("HERMES_INFERENCE_PROVIDER", "openrouter")
     monkeypatch.setattr(
-        "hermes_cli.model_switch.switch_model", lambda **_kwargs: result
+        "cortex_cli.model_switch.switch_model", lambda **_kwargs: result
     )
     monkeypatch.setattr(server, "_restart_slash_worker", lambda sid, session: None)
     monkeypatch.setattr(server, "_emit", lambda *args, **kwargs: None)
@@ -3006,7 +3006,7 @@ def test_config_set_model_records_per_session_override_not_env(monkeypatch):
     monkeypatch.delenv("HERMES_TUI_PROVIDER", raising=False)
     monkeypatch.delenv("HERMES_INFERENCE_PROVIDER", raising=False)
     monkeypatch.setattr(
-        "hermes_cli.model_switch.switch_model", lambda **_kwargs: result
+        "cortex_cli.model_switch.switch_model", lambda **_kwargs: result
     )
     monkeypatch.setattr(server, "_restart_slash_worker", lambda sid, session: None)
     monkeypatch.setattr(server, "_emit", lambda *args, **kwargs: None)
@@ -3077,7 +3077,7 @@ def test_config_set_model_switches_agent_without_touching_env(monkeypatch):
             warning_message="",
         )
 
-    monkeypatch.setattr("hermes_cli.model_switch.switch_model", fake_switch_model)
+    monkeypatch.setattr("cortex_cli.model_switch.switch_model", fake_switch_model)
 
     try:
         resp = server.handle_request(
@@ -3199,7 +3199,7 @@ def test_session_compress_syncs_session_key_after_rotation(monkeypatch):
     """When AIAgent._compress_context rotates session_id (compression split),
     the gateway session_key must follow so subsequent approval routing,
     DB title/history lookups, and slash worker resume target the new
-    continuation session — mirrors HermesCLI._manual_compress's
+    continuation session — mirrors AthenaCLI._manual_compress's
     session_id sync (cli.py).
     """
     agent = types.SimpleNamespace(session_id="rotated-id")
@@ -3648,7 +3648,7 @@ def test_session_status_reads_live_gateway_agent(monkeypatch):
         server._sessions.pop("sid", None)
 
     out = resp["result"]["output"]
-    assert "Hermes TUI Status" in out
+    assert "Athena TUI Status" in out
     assert "Session ID: session-key" in out
     assert "Title: Live TUI" in out
     assert "Model: live-model (live-provider)" in out
@@ -3737,7 +3737,7 @@ def test_command_dispatch_exec_nonzero_surfaces_error(monkeypatch):
 
 
 def test_plugins_list_surfaces_loader_error(monkeypatch):
-    with patch("hermes_cli.plugins.get_plugin_manager", side_effect=Exception("boom")):
+    with patch("cortex_cli.plugins.get_plugin_manager", side_effect=Exception("boom")):
         resp = server.handle_request(
             {"id": "1", "method": "plugins.list", "params": {}}
         )
@@ -3748,7 +3748,7 @@ def test_plugins_list_surfaces_loader_error(monkeypatch):
 
 def test_complete_slash_surfaces_completer_error(monkeypatch):
     with patch(
-        "hermes_cli.commands.SlashCommandCompleter",
+        "cortex_cli.commands.SlashCommandCompleter",
         side_effect=Exception("no completer"),
     ):
         resp = server.handle_request(
@@ -4718,14 +4718,14 @@ def test_session_create_no_race_keeps_worker_alive(monkeypatch):
 
 
 def test_get_db_degrades_cleanly_when_sessiondb_init_fails(monkeypatch):
-    fake_mod = types.ModuleType("hermes_state")
+    fake_mod = types.ModuleType("cortex_state")
 
     class _BrokenSessionDB:
         def __init__(self):
             raise RuntimeError("locking protocol")
 
     fake_mod.SessionDB = _BrokenSessionDB
-    monkeypatch.setitem(sys.modules, "hermes_state", fake_mod)
+    monkeypatch.setitem(sys.modules, "cortex_state", fake_mod)
     monkeypatch.setattr(server, "_db", None)
     monkeypatch.setattr(server, "_db_error", None)
 
@@ -4956,8 +4956,8 @@ def test_session_delete_success_returns_deleted_id(monkeypatch):
     assert resp["result"] == {"deleted": "old-1"}
     assert captured["sid"] == "old-1"
     # sessions_dir must be forwarded so transcript files get cleaned up
-    # too — not just the SQLite row.  The autouse _isolate_hermes_home
-    # fixture pins HERMES_HOME to a temp dir; the handler should append
+    # too — not just the SQLite row.  The autouse _isolate_cortex_home
+    # fixture pins CORTEX_HOME to a temp dir; the handler should append
     # /sessions to it.
     assert captured["sessions_dir"] is not None
     assert str(captured["sessions_dir"]).endswith("sessions")
@@ -4997,13 +4997,13 @@ def test_model_options_does_not_overwrite_curated_models(monkeypatch):
     )
 
     with patch(
-        "hermes_cli.model_switch.list_authenticated_providers",
+        "cortex_cli.model_switch.list_authenticated_providers",
         return_value=curated_providers,
     ) as listing:
         # If provider_model_ids gets called at all, the handler is still
         # overwriting curated with live — that's the regression we're
         # guarding against.
-        with patch("hermes_cli.models.provider_model_ids") as live_fetch:
+        with patch("cortex_cli.models.provider_model_ids") as live_fetch:
             resp = server._methods["model.options"](99, {"session_id": ""})
 
     assert "result" in resp, resp
@@ -5030,7 +5030,7 @@ def test_model_options_propagates_list_exception(monkeypatch):
         lambda: {"providers": {}, "custom_providers": []},
     )
     with patch(
-        "hermes_cli.model_switch.list_authenticated_providers",
+        "cortex_cli.model_switch.list_authenticated_providers",
         side_effect=RuntimeError("catalog blew up"),
     ):
         resp = server._methods["model.options"](77, {"session_id": ""})
@@ -5620,7 +5620,7 @@ def test_browser_manage_status_falls_back_to_config_cdp_url(monkeypatch):
     fake_cfg = types.SimpleNamespace(
         read_raw_config=lambda: {"browser": {"cdp_url": "http://lan:9222"}}
     )
-    with patch.dict(sys.modules, {"hermes_cli.config": fake_cfg}):
+    with patch.dict(sys.modules, {"cortex_cli.config": fake_cfg}):
         resp = server.handle_request(
             {"id": "1", "method": "browser.manage", "params": {"action": "status"}}
         )
@@ -5714,10 +5714,10 @@ def test_browser_manage_connect_default_local_reports_launch_hint(monkeypatch):
         _stub_urlopen(monkeypatch, ok=False)
         with (
             patch(
-                "hermes_cli.browser_connect.try_launch_chrome_debug", return_value=False
+                "cortex_cli.browser_connect.try_launch_chrome_debug", return_value=False
             ),
             patch(
-                "hermes_cli.browser_connect.get_chrome_debug_candidates",
+                "cortex_cli.browser_connect.get_chrome_debug_candidates",
                 return_value=[],
             ),
         ):
@@ -5770,10 +5770,10 @@ def test_browser_manage_connect_no_session_skips_progress_events(monkeypatch):
         _stub_urlopen(monkeypatch, ok=False)
         with (
             patch(
-                "hermes_cli.browser_connect.try_launch_chrome_debug", return_value=False
+                "cortex_cli.browser_connect.try_launch_chrome_debug", return_value=False
             ),
             patch(
-                "hermes_cli.browser_connect.get_chrome_debug_candidates",
+                "cortex_cli.browser_connect.get_chrome_debug_candidates",
                 return_value=[],
             ),
         ):
@@ -5858,7 +5858,7 @@ def test_browser_manage_connect_default_local_retries_after_launch(monkeypatch):
     monkeypatch.setattr(urllib.request, "urlopen", _opener)
     with patch.dict(sys.modules, {"tools.browser_tool": fake}):
         with patch(
-            "hermes_cli.browser_connect.try_launch_chrome_debug", return_value=True
+            "cortex_cli.browser_connect.try_launch_chrome_debug", return_value=True
         ):
             resp = server.handle_request(
                 {"id": "1", "method": "browser.manage", "params": {"action": "connect"}}
@@ -6249,7 +6249,7 @@ def test_config_set_indicator_none_keeps_blank_repr(monkeypatch):
 
 
 def test_reload_env_rpc_calls_hermes_cli_reload_env(monkeypatch):
-    """reload.env mirrors classic CLI's `/reload` — re-reads ~/.hermes/.env
+    """reload.env mirrors classic CLI's `/reload` — re-reads ~/.cortex/.env
     into the gateway process and reports the count of vars updated."""
     calls = {"n": 0}
 
@@ -6258,7 +6258,7 @@ def test_reload_env_rpc_calls_hermes_cli_reload_env(monkeypatch):
         return 7
 
     fake = types.SimpleNamespace(reload_env=_fake_reload)
-    with patch.dict(sys.modules, {"hermes_cli.config": fake}):
+    with patch.dict(sys.modules, {"cortex_cli.config": fake}):
         resp = server.handle_request({"id": "1", "method": "reload.env", "params": {}})
 
     assert resp["result"] == {"updated": 7}
@@ -6270,7 +6270,7 @@ def test_reload_env_rpc_surfaces_errors(monkeypatch):
         raise RuntimeError("env path locked")
 
     fake = types.SimpleNamespace(reload_env=_broken)
-    with patch.dict(sys.modules, {"hermes_cli.config": fake}):
+    with patch.dict(sys.modules, {"cortex_cli.config": fake}):
         resp = server.handle_request({"id": "1", "method": "reload.env", "params": {}})
 
     assert "error" in resp
@@ -6286,7 +6286,7 @@ def _setup_make_agent_mocks(monkeypatch, cfg):
         server, "_resolve_startup_runtime", lambda: ("test-model", None)
     )
     monkeypatch.setattr(
-        "hermes_cli.runtime_provider.resolve_runtime_provider",
+        "cortex_cli.runtime_provider.resolve_runtime_provider",
         lambda requested=None, target_model=None: {
             "provider": None,
             "base_url": None,
@@ -6318,7 +6318,7 @@ def test_make_agent_waits_for_shared_mcp_discovery(monkeypatch):
     _setup_make_agent_mocks(monkeypatch, {})
     waited = []
 
-    from hermes_cli import mcp_startup
+    from cortex_cli import mcp_startup
 
     monkeypatch.setattr(
         mcp_startup,
@@ -6370,7 +6370,7 @@ def test_make_agent_uses_session_runtime_overrides(monkeypatch):
         }
 
     monkeypatch.setattr(
-        "hermes_cli.runtime_provider.resolve_runtime_provider",
+        "cortex_cli.runtime_provider.resolve_runtime_provider",
         fake_resolve_runtime_provider,
     )
 
@@ -6633,8 +6633,8 @@ def test_notification_poller_requeues_when_busy(monkeypatch):
             process_registry.completion_queue.get_nowait()
 
 
-def test_session_save_writes_under_hermes_home_with_system_prompt(monkeypatch, tmp_path):
-    """TUI /save (session.save RPC) must snapshot under the Hermes profile
+def test_session_save_writes_under_cortex_home_with_system_prompt(monkeypatch, tmp_path):
+    """TUI /save (session.save RPC) must snapshot under the Athena profile
     home — not the project/workspace CWD — and include the system prompt,
     mirroring the classic CLI /save and the dashboard save export.
 
@@ -6644,7 +6644,7 @@ def test_session_save_writes_under_hermes_home_with_system_prompt(monkeypatch, t
     """
     home = tmp_path / ".hermes"
     home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("CORTEX_HOME", str(home))
 
     # Run from a different CWD to prove the snapshot does NOT leak there.
     work = tmp_path / "workspace"
@@ -6656,7 +6656,7 @@ def test_session_save_writes_under_hermes_home_with_system_prompt(monkeypatch, t
         model="hermes-test",
         session_id="20260101_120000_abc123",
         session_start=datetime(2026, 1, 1, 12, 0, 0),
-        _cached_system_prompt="You are Hermes.",
+        _cached_system_prompt="You are Athena.",
     )
     history = [
         {"role": "user", "content": "hi"},
@@ -6688,7 +6688,7 @@ def test_session_save_writes_under_hermes_home_with_system_prompt(monkeypatch, t
     assert payload["model"] == "hermes-test"
     assert payload["session_id"] == "20260101_120000_abc123"
     assert payload["session_start"] == "2026-01-01T12:00:00"
-    assert payload["system_prompt"] == "You are Hermes."
+    assert payload["system_prompt"] == "You are Athena."
     assert payload["messages"] == history
 
 
@@ -6802,7 +6802,7 @@ def _attach_bytes_cli(monkeypatch):
 def test_image_attach_bytes_writes_to_gateway_dir(monkeypatch, tmp_path):
     """Remote client uploads base64 bytes; gateway writes them to its own disk."""
     _attach_bytes_cli(monkeypatch)
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_cortex_home", tmp_path)
     server._sessions["abx"] = _session()
 
     resp = server.handle_request(
@@ -6829,7 +6829,7 @@ def test_image_attach_bytes_writes_to_gateway_dir(monkeypatch, tmp_path):
 
 def test_image_attach_bytes_accepts_data_url_prefix(monkeypatch, tmp_path):
     _attach_bytes_cli(monkeypatch)
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_cortex_home", tmp_path)
     server._sessions["abx2"] = _session()
 
     resp = server.handle_request(
@@ -6848,7 +6848,7 @@ def test_image_attach_bytes_accepts_data_url_prefix(monkeypatch, tmp_path):
 def test_image_attach_bytes_data_alias_and_magic_sniff(monkeypatch, tmp_path):
     """Older desktop builds send `data` (not content_base64); ext sniffed from bytes."""
     _attach_bytes_cli(monkeypatch)
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_cortex_home", tmp_path)
     server._sessions["abx3"] = _session()
 
     resp = server.handle_request(
@@ -6865,7 +6865,7 @@ def test_image_attach_bytes_data_alias_and_magic_sniff(monkeypatch, tmp_path):
 
 def test_image_attach_bytes_rejects_invalid_base64(monkeypatch, tmp_path):
     _attach_bytes_cli(monkeypatch)
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_cortex_home", tmp_path)
     server._sessions["abx4"] = _session()
 
     resp = server.handle_request(
@@ -6883,7 +6883,7 @@ def test_image_attach_bytes_rejects_oversize(monkeypatch, tmp_path):
     import base64 as _b64
 
     _attach_bytes_cli(monkeypatch)
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_cortex_home", tmp_path)
     monkeypatch.setattr(server, "_ATTACH_BYTES_MAX_BYTES", 10)
     server._sessions["abx5"] = _session()
 
@@ -6901,7 +6901,7 @@ def test_image_attach_bytes_rejects_oversize(monkeypatch, tmp_path):
 
 def test_image_attach_bytes_rejects_unsupported_extension(monkeypatch, tmp_path):
     _attach_bytes_cli(monkeypatch)
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_cortex_home", tmp_path)
     server._sessions["abx6"] = _session()
 
     # filename hint forces a non-image extension; magic sniff is bypassed by hint
@@ -6923,7 +6923,7 @@ def test_image_attach_bytes_rejects_unsupported_extension(monkeypatch, tmp_path)
 def test_pdf_attach_requires_poppler(monkeypatch, tmp_path):
     """Without pdftoppm on PATH, pdf.attach returns a clear 5028."""
     _attach_bytes_cli(monkeypatch)
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_cortex_home", tmp_path)
     monkeypatch.setattr("shutil.which", lambda _name: None)
     server._sessions["pdf1"] = _session()
 
@@ -6942,7 +6942,7 @@ def test_pdf_attach_rejects_non_pdf_bytes(monkeypatch, tmp_path):
     import base64 as _b64
 
     _attach_bytes_cli(monkeypatch)
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_cortex_home", tmp_path)
     monkeypatch.setattr("shutil.which", lambda _name: "/usr/bin/pdftoppm")
     server._sessions["pdf2"] = _session()
 
@@ -6960,7 +6960,7 @@ def test_pdf_attach_rejects_non_pdf_bytes(monkeypatch, tmp_path):
 
 def test_pdf_attach_requires_path_or_bytes(monkeypatch, tmp_path):
     _attach_bytes_cli(monkeypatch)
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_cortex_home", tmp_path)
     monkeypatch.setattr("shutil.which", lambda _name: "/usr/bin/pdftoppm")
     server._sessions["pdf3"] = _session()
 

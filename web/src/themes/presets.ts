@@ -198,7 +198,7 @@ export const roseTheme: DashboardTheme = {
  * cream `#E8F2FD` canvas.
  *
  * Note on bg blend mode: the DS Lens uses `multiply` for LENS_5I because
- * nousnet-web's <body> is white; hermes-agent's App root is `bg-black`,
+ * nousnet-web's <body> is white; athena-agent's App root is `bg-black`,
  * so we leave the bg layer's blend mode at the `difference` default —
  * `difference(#170d02, #000)` passes the bg through unchanged, and the
  * subsequent FG-difference layer then inverts it to cream. Using

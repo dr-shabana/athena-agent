@@ -64,7 +64,7 @@ _HERMES_CORE_TOOLS = [
     # Home Assistant smart home control (gated on HASS_TOKEN via check_fn)
     "ha_list_entities", "ha_get_state", "ha_list_services", "ha_call_service",
     # Kanban multi-agent coordination — only in schema when the agent is
-    # spawned as a kanban worker (HERMES_KANBAN_TASK env set) or the current
+    # spawned as a kanban worker (CORTEX_KANBAN_TASK env set) or the current
     # profile explicitly enables the kanban toolset. Gated via check_fn in
     # tools/kanban_tools.py.
     "kanban_show", "kanban_list",
@@ -107,7 +107,7 @@ TOOLSETS = {
             "Search X (Twitter) posts and threads via xAI's built-in "
             "x_search Responses tool. Available when xAI credentials are "
             "configured (SuperGrok OAuth or XAI_API_KEY). Off by default; "
-            "enable in `hermes tools` → X (Twitter) Search."
+            "enable in `athena tools` → X (Twitter) Search."
         ),
         "tools": ["x_search"],
         "includes": []
@@ -136,7 +136,7 @@ TOOLSETS = {
             "Video generation tools. Single ``video_generate`` tool covers "
             "text-to-video (prompt only) and image-to-video (prompt + "
             "image_url) — the active backend auto-routes. Configure via "
-            "``hermes tools`` → Video Generation."
+            "``athena tools`` → Video Generation."
         ),
         "tools": ["video_generate"],
         "includes": []
@@ -261,7 +261,7 @@ TOOLSETS = {
     "kanban": {
         "description": (
             "Kanban multi-agent coordination — only active when the agent "
-            "is spawned by the kanban dispatcher (HERMES_KANBAN_TASK env "
+            "is spawned by the kanban dispatcher (CORTEX_KANBAN_TASK env "
             "set). The dispatcher runs inside the gateway by default; see "
             "`kanban.dispatch_in_gateway` in config.yaml. Lets workers mark "
             "tasks done with structured handoffs, block for human input, "
@@ -340,7 +340,7 @@ TOOLSETS = {
         "includes": ["web", "vision", "image_gen"]
     },
 
-    # Coding posture (base Hermes — CLI/TUI/desktop/ACP). Auto-selected in a
+    # Coding posture (base Athena — CLI/TUI/desktop/ACP). Auto-selected in a
     # code workspace; see agent/coding_context.py. Keeps everything you reach
     # for while pairing on code and drops the rest (messaging, tts, image_gen,
     # spotify, home-assistant, cron, computer-use).
@@ -363,18 +363,18 @@ TOOLSETS = {
         "includes": [],
         # Posture toolset: selected per-session by agent/coding_context.py,
         # never auto-recovered into per-platform tool config (see the
-        # non-configurable-toolset recovery loop in hermes_cli/tools_config.py).
+        # non-configurable-toolset recovery loop in cortex_cli/tools_config.py).
         "posture": True,
     },
     
     # ==========================================================================
-    # Full Hermes toolsets (CLI + messaging platforms)
+    # Full Athena toolsets (CLI + messaging platforms)
     #
     # All platforms share the same core tools (including send_message,
     # which is gated on gateway running via its check_fn).
     # ==========================================================================
 
-    "hermes-acp": {
+    "athena-acp": {
         "description": "Editor integration (VS Code, Zed, JetBrains) — coding-focused tools without messaging, audio, or clarify UI",
         "tools": [
             "web_search", "web_extract",
@@ -434,11 +434,11 @@ TOOLSETS = {
 
     "hermes-cron": {
         # Mirrors hermes-cli so cron's "default" toolset is the same set of
-        # core tools users see interactively — then `hermes tools` filters
+        # core tools users see interactively — then `athena tools` filters
         # them down per the platform config. _DEFAULT_OFF_TOOLSETS (moa,
         # homeassistant) are excluded by _get_platform_tools() unless
         # the user explicitly enables them.
-        "description": "Default cron toolset - same core tools as hermes-cli; gated by `hermes tools`",
+        "description": "Default cron toolset - same core tools as hermes-cli; gated by `athena tools`",
         "tools": _HERMES_CORE_TOOLS,
         "includes": []
     },
@@ -489,7 +489,7 @@ TOOLSETS = {
     },
 
     "hermes-email": {
-        "description": "Email bot toolset - interact with Hermes via email (IMAP/SMTP)",
+        "description": "Email bot toolset - interact with Athena via email (IMAP/SMTP)",
         "tools": _HERMES_CORE_TOOLS,
         "includes": []
     },
@@ -562,7 +562,7 @@ TOOLSETS = {
     },
 
     "hermes-sms": {
-        "description": "SMS bot toolset - interact with Hermes via SMS (Twilio)",
+        "description": "SMS bot toolset - interact with Athena via SMS (Twilio)",
         "tools": _HERMES_CORE_TOOLS,
         "includes": []
     },

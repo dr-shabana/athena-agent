@@ -9,7 +9,7 @@ no messages, no title, and no child sessions.
 
 import pytest
 
-from hermes_state import SessionDB
+from cortex_state import SessionDB
 
 
 @pytest.fixture()
@@ -106,12 +106,12 @@ class TestDeleteSessionIfEmpty:
 
 
 class TestCLIDiscardSessionIfEmpty:
-    """Wiring tests for HermesCLI._discard_session_if_empty."""
+    """Wiring tests for AthenaCLI._discard_session_if_empty."""
 
     def _make_cli(self, db):
-        from cli import HermesCLI
+        from cli import AthenaCLI
 
-        cli = HermesCLI.__new__(HermesCLI)
+        cli = AthenaCLI.__new__(AthenaCLI)
         cli._session_db = db
         cli.conversation_history = []
         return cli

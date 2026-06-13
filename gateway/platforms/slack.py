@@ -762,9 +762,9 @@ class SlackAdapter(BasePlatformAdapter):
         bot_tokens = [t.strip() for t in raw_token.split(",") if t.strip()]
 
         # Also load tokens from OAuth token file
-        from hermes_constants import get_hermes_home
+        from cortex_constants import get_cortex_home
 
-        tokens_file = get_hermes_home() / "slack_tokens.json"
+        tokens_file = get_cortex_home() / "slack_tokens.json"
         if tokens_file.exists():
             try:
                 saved = json.loads(tokens_file.read_text(encoding="utf-8"))
@@ -893,7 +893,7 @@ class SlackAdapter(BasePlatformAdapter):
                 pass
 
             # Reactions are useful lightweight acknowledgements in Slack, but
-            # Hermes does not currently need to route them into the agent loop.
+            # Athena does not currently need to route them into the agent loop.
             # Ack the events explicitly so high-traffic channels do not fill
             # gateway.error.log with Slack Bolt "Unhandled request" warnings.
             @self._app.event("reaction_added")
@@ -921,11 +921,11 @@ class SlackAdapter(BasePlatformAdapter):
             # N identical @app.command() decorators.
             #
             # The slash commands must ALSO be declared in the Slack app
-            # manifest (see `hermes slack manifest`). In Socket Mode, Slack
+            # manifest (see `athena slack manifest`). In Socket Mode, Slack
             # routes the command event through the socket regardless of the
             # manifest's request URL, but it will not deliver an event for
             # a slash command the manifest doesn't declare.
-            from hermes_cli.commands import slack_native_slashes
+            from cortex_cli.commands import slack_native_slashes
             import re as _re
 
             _slash_names = [name for name, _d, _h in slack_native_slashes()]
@@ -974,7 +974,7 @@ class SlackAdapter(BasePlatformAdapter):
             # down the gateway: any exception inside the plugin handler is
             # caught and logged, and slack_bolt still sees a clean ack.
             try:
-                from hermes_cli.plugins import get_plugin_manager
+                from cortex_cli.plugins import get_plugin_manager
                 _plugin_handlers = get_plugin_manager().get_slack_action_handlers()
             except Exception as e:  # pragma: no cover - defensive
                 logger.warning(
@@ -1069,7 +1069,7 @@ class SlackAdapter(BasePlatformAdapter):
             if client is None:
                 return None
             seed_text = (
-                f":thread: Hermes handoff — *{(name or 'session').strip()[:80]}*"
+                f":thread: Athena handoff — *{(name or 'session').strip()[:80]}*"
             )
             result = await client.chat_postMessage(
                 channel=parent_chat_id,
@@ -1321,7 +1321,7 @@ class SlackAdapter(BasePlatformAdapter):
         """Whether top-level Slack DMs get per-message session threads.
 
         Defaults to ``True`` so each visible DM reply thread is isolated as its
-        own Hermes session — matching the per-thread behavior channels already
+        own Athena session — matching the per-thread behavior channels already
         have.  Set ``platforms.slack.extra.dm_top_level_threads_as_sessions``
         to ``false`` in config.yaml to revert to the legacy behavior where all
         top-level DMs share one continuous session.
@@ -2297,7 +2297,7 @@ class SlackAdapter(BasePlatformAdapter):
         # so casual messages like "!nice work" pass through unchanged.
         if original_text.startswith("!"):
             try:
-                from hermes_cli.commands import is_gateway_known_command
+                from cortex_cli.commands import is_gateway_known_command
 
                 first_token = original_text[1:].split(maxsplit=1)[0]
                 # Strip "@suffix" the same way get_command() does, so
@@ -3511,11 +3511,11 @@ class SlackAdapter(BasePlatformAdapter):
         if team_id and channel_id:
             self._channel_team[channel_id] = team_id
 
-        if slash_name in {"hermes", ""}:
+        if slash_name in {"athena", ""}:
             # Legacy /hermes <subcommand> [args] routing + free-form questions.
             # Empty slash_name falls into this branch for backward compat
             # with any caller that didn't populate command["command"].
-            from hermes_cli.commands import slack_subcommand_map
+            from cortex_cli.commands import slack_subcommand_map
 
             subcommand_map = slack_subcommand_map()
             subcommand_map["compact"] = "/compress"

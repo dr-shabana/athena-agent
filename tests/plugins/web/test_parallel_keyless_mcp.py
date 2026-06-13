@@ -39,7 +39,7 @@ class TestMcpHeaders:
             pp._mcp_headers(session_id="sid", api_key="pk-live")["User-Agent"],
         ):
             assert ua == f"{pp._MCP_CLIENT_NAME}/{pp._MCP_CLIENT_VERSION}"
-            assert "hermes" not in ua.lower()
+            assert "athena" not in ua.lower()
 
     def test_session_id_and_bearer_when_present(self):
         h = pp._mcp_headers(session_id="sid-123", api_key="pk-live")

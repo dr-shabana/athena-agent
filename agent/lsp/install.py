@@ -1,8 +1,8 @@
 """Auto-installation of LSP server binaries.
 
 Tries to install missing servers using whatever package manager is
-appropriate.  All installs go to a Hermes-owned bin staging dir,
-``<HERMES_HOME>/lsp/bin/``, so we don't pollute the user's global
+appropriate.  All installs go to a Athena-owned bin staging dir,
+``<CORTEX_HOME>/lsp/bin/``, so we don't pollute the user's global
 toolchain.
 
 Strategies:
@@ -10,7 +10,7 @@ Strategies:
 - ``auto`` — attempt to install with the best available package
   manager.  This is the default.
 - ``manual`` — never install; if a binary is missing, the server is
-  silently skipped and the user is told about it via ``hermes lsp
+  silently skipped and the user is told about it via ``athena lsp
   status``.
 - ``off`` — same as ``manual`` for now (kept distinct so we can
   evolve behavior later, e.g. logging differently).
@@ -40,7 +40,7 @@ logger = logging.getLogger("agent.lsp.install")
 # Package-name → install-strategy hint registry.  Each entry is a
 # tuple of strategy name + package name + executable name.  When the
 # install completes, we look for the executable in
-# ``<HERMES_HOME>/lsp/bin/`` first, then on PATH.
+# ``<CORTEX_HOME>/lsp/bin/`` first, then on PATH.
 #
 # Optional fields:
 #   - ``extra_pkgs``: list of sibling packages to install alongside
@@ -116,8 +116,8 @@ def _is_windows() -> bool:
 
 
 def hermes_lsp_bin_dir() -> Path:
-    """Return the Hermes-owned bin staging dir for LSP servers."""
-    home = os.environ.get("HERMES_HOME")
+    """Return the Athena-owned bin staging dir for LSP servers."""
+    home = os.environ.get("CORTEX_HOME")
     if home is None:
         home = os.path.join(os.path.expanduser("~"), ".hermes")
     p = Path(home) / "lsp" / "bin"
@@ -248,7 +248,7 @@ def _install_npm(
     if npm is None:
         logger.info("[install] cannot install %s: npm not on PATH", pkg)
         return None
-    staging = hermes_lsp_bin_dir().parent  # <HERMES_HOME>/lsp/
+    staging = hermes_lsp_bin_dir().parent  # <CORTEX_HOME>/lsp/
     install_targets = [pkg] + list(extra_pkgs or [])
     try:
         logger.info(
@@ -383,7 +383,7 @@ def _install_pip(pkg: str, bin_name: str) -> Optional[str]:
 def detect_status(pkg: str) -> str:
     """Return ``installed``, ``missing``, or ``manual-only`` for a package.
 
-    Used by the ``hermes lsp status`` CLI to give users a quick
+    Used by the ``athena lsp status`` CLI to give users a quick
     overview of what's available without spawning anything.
     """
     recipe = INSTALL_RECIPES.get(pkg)

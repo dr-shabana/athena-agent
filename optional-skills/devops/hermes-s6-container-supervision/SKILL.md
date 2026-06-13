@@ -1,29 +1,29 @@
 ---
 name: hermes-s6-container-supervision
-description: Modify, debug, or extend the s6-overlay supervision tree inside the Hermes Agent Docker image — adding new services, debugging profile gateways, understanding the Architecture B main-program pattern.
+description: Modify, debug, or extend the s6-overlay supervision tree inside the Athena Agent Docker image — adding new services, debugging profile gateways, understanding the Architecture B main-program pattern.
 version: 1.0.0
-author: Hermes Agent
+author: Athena Agent
 license: MIT
 platforms: [linux]
 environments: [s6]
 metadata:
   hermes:
     tags: [docker, s6, supervision, gateway, profiles]
-    related_skills: [hermes-agent, hermes-agent-dev]
+    related_skills: [athena-agent, athena-agent-dev]
 ---
 
-# Hermes s6-overlay Container Supervision
+# Athena s6-overlay Container Supervision
 
 ## When to use this skill
 
 Load this skill when you're working on:
-- Adding or removing a static service in the Hermes Docker image (something that should be supervised at every container start, like the dashboard)
+- Adding or removing a static service in the Athena Docker image (something that should be supervised at every container start, like the dashboard)
 - Diagnosing why a per-profile gateway isn't starting, restarting, or surviving `docker restart`
 - Understanding why the container's CMD is `/opt/hermes/docker/main-wrapper.sh` and how leading-dash args reach the user's program
 - Modifying `cont-init.d` boot scripts (UID remap, volume seeding, profile reconciliation)
 - Changing the rendered run-script for per-profile gateways (Phase 4)
 
-If you're just running the Hermes Agent and want to use Docker, see `website/docs/user-guide/docker.md` instead.
+If you're just running the Athena Agent and want to use Docker, see `website/docs/user-guide/docker.md` instead.
 
 ## Architecture at a glance
 
@@ -38,7 +38,7 @@ If you're just running the Hermes Agent and want to use Docker, see `website/doc
 │   │   └── skills_sync.py
 │   └── 02-reconcile-profiles          ← hermes_cli.container_boot
 │       ├── chown /run/service (hermes-writable for runtime register)
-│       └── walk $HERMES_HOME/profiles/<name>/gateway_state.json
+│       └── walk $CORTEX_HOME/profiles/<name>/gateway_state.json
 │           → recreate /run/service/gateway-<name>/
 │           → auto-start only those with prior_state == "running"
 │
@@ -51,7 +51,7 @@ If you're just running the Hermes Agent and want to use Docker, see `website/doc
 │   │   ├── type        ("longrun")
 │   │   ├── run         ("#!/command/with-contenv sh ... exec s6-setuidgid hermes hermes -p coder gateway run")
 │   │   ├── down        (marker — present means "registered but don't auto-start")
-│   │   └── log/run     (s6-log → $HERMES_HOME/logs/gateways/coder/current)
+│   │   └── log/run     (s6-log → $CORTEX_HOME/logs/gateways/coder/current)
 │   └── ...
 │
 └── CMD ("main program")               ← /opt/hermes/docker/main-wrapper.sh
@@ -135,8 +135,8 @@ Edit `S6ServiceManager._render_run_script` in `hermes_cli/service_manager.py`. T
 ### Run the docker test harness
 
 ```sh
-docker build -t hermes-agent-harness:latest .
-HERMES_TEST_IMAGE=hermes-agent-harness:latest scripts/run_tests.sh tests/docker/ -v
+docker build -t athena-agent-harness:latest .
+HERMES_TEST_IMAGE=athena-agent-harness:latest scripts/run_tests.sh tests/docker/ -v
 # Expect 19 passed, 0 xfailed against the s6 image
 ```
 
@@ -150,11 +150,11 @@ The harness lives in `tests/docker/` and skips when Docker isn't available. The 
 
 ### Profile directory ownership
 
-The cont-init reconciler runs as hermes (`s6-setuidgid hermes` in `02-reconcile-profiles`). If a profile dir ends up root-owned (e.g. because `docker exec <c> hermes profile create …` ran as root by default), the reconciler can't read SOUL.md and fails with `PermissionError`. Mitigation: `stage2-hook.sh` chowns `$HERMES_HOME/profiles` to hermes on **every** boot, idempotently. Don't remove that block.
+The cont-init reconciler runs as hermes (`s6-setuidgid hermes` in `02-reconcile-profiles`). If a profile dir ends up root-owned (e.g. because `docker exec <c> hermes profile create …` ran as root by default), the reconciler can't read SOUL.md and fails with `PermissionError`. Mitigation: `stage2-hook.sh` chowns `$CORTEX_HOME/profiles` to hermes on **every** boot, idempotently. Don't remove that block.
 
 ### Files written by `docker exec` are root-owned
 
-`docker exec` defaults to root. Either pass `--user hermes` or rely on the stage2 chown sweep next reboot. Don't write files under `$HERMES_HOME/profiles/<name>/` as root manually — the next reconcile pass will sweep them but in-flight operations may hit perm errors.
+`docker exec` defaults to root. Either pass `--user hermes` or rely on the stage2 chown sweep next reboot. Don't write files under `$CORTEX_HOME/profiles/<name>/` as root manually — the next reconcile pass will sweep them but in-flight operations may hit perm errors.
 
 ### Service slot exists but s6-svstat says "s6-supervise not running"
 
@@ -174,5 +174,5 @@ Check whether something is invoking `s6-svscanctl -t` or `/run/s6/basedir/bin/ha
 
 ## Related skills
 
-- `hermes-agent-dev`: General hermes-agent codebase navigation
-- `hermes-tool-quirks`: Specific Hermes-tool workarounds (sed/grep/etc.) — load when debugging the s6 stack's interaction with hermes built-in tools.
+- `athena-agent-dev`: General athena-agent codebase navigation
+- `hermes-tool-quirks`: Specific Athena-tool workarounds (sed/grep/etc.) — load when debugging the s6 stack's interaction with hermes built-in tools.

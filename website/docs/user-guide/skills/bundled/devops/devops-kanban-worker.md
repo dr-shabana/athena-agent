@@ -1,14 +1,14 @@
 ---
-title: "Kanban Worker — Pitfalls, examples, and edge cases for Hermes Kanban workers"
+title: "Kanban Worker — Pitfalls, examples, and edge cases for Athena Kanban workers"
 sidebar_label: "Kanban Worker"
-description: "Pitfalls, examples, and edge cases for Hermes Kanban workers"
+description: "Pitfalls, examples, and edge cases for Athena Kanban workers"
 ---
 
 {/* This page is auto-generated from the skill's SKILL.md by website/scripts/generate-skill-docs.py. Edit the source SKILL.md, not this page. */}
 
 # Kanban Worker
 
-Pitfalls, examples, and edge cases for Hermes Kanban workers. The lifecycle itself is auto-injected into every worker's system prompt as KANBAN_GUIDANCE (from agent/prompt_builder.py); this skill is what you load when you want deeper detail on specific scenarios.
+Pitfalls, examples, and edge cases for Athena Kanban workers. The lifecycle itself is auto-injected into every worker's system prompt as KANBAN_GUIDANCE (from agent/prompt_builder.py); this skill is what you load when you want deeper detail on specific scenarios.
 
 ## Skill metadata
 
@@ -24,12 +24,12 @@ Pitfalls, examples, and edge cases for Hermes Kanban workers. The lifecycle itse
 ## Reference: full SKILL.md
 
 :::info
-The following is the complete skill definition that Hermes loads when this skill is triggered. This is what the agent sees as instructions when the skill is active.
+The following is the complete skill definition that Athena loads when this skill is triggered. This is what the agent sees as instructions when the skill is active.
 :::
 
 # Kanban Worker — Pitfalls and Examples
 
-> You're seeing this skill because the Hermes Kanban dispatcher spawned you as a worker with `--skills kanban-worker` — it's loaded automatically for every dispatched worker. The **lifecycle** (6 steps: orient → work → heartbeat → block/complete) also lives in the `KANBAN_GUIDANCE` block that's auto-injected into your system prompt. This skill is the deeper detail: good handoff shapes, retry diagnostics, edge cases.
+> You're seeing this skill because the Athena Kanban dispatcher spawned you as a worker with `--skills kanban-worker` — it's loaded automatically for every dispatched worker. The **lifecycle** (6 steps: orient → work → heartbeat → block/complete) also lives in the `KANBAN_GUIDANCE` block that's auto-injected into your system prompt. This skill is the deeper detail: good handoff shapes, retry diagnostics, edge cases.
 
 ## Workspace handling
 
@@ -39,7 +39,7 @@ Your workspace kind determines how you should behave inside `$HERMES_KANBAN_WORK
 |---|---|---|
 | `scratch` | Fresh tmp dir, yours alone | Read/write freely; it gets GC'd when the task is archived. |
 | `dir:<path>` | Shared persistent directory | Other runs will read what you write. Treat it like long-lived state. Path is guaranteed absolute (the kernel rejects relative paths). |
-| `worktree` | Git worktree at the resolved path | If `.git` doesn't exist, run `git worktree add <path> ${HERMES_KANBAN_BRANCH:-wt/$HERMES_KANBAN_TASK}` from the main repo first, then cd and work normally. Commit work here. |
+| `worktree` | Git worktree at the resolved path | If `.git` doesn't exist, run `git worktree add <path> ${HERMES_KANBAN_BRANCH:-wt/$CORTEX_KANBAN_TASK}` from the main repo first, then cd and work normally. Commit work here. |
 
 ## Tenant isolation
 
@@ -151,7 +151,7 @@ Good: one sentence naming the specific decision you need. Leave longer context a
 
 ```python
 kanban_comment(
-    task_id=os.environ["HERMES_KANBAN_TASK"],
+    task_id=os.environ["CORTEX_KANBAN_TASK"],
     body="Full context: I have user IPs from Cloudflare headers but some users are behind NATs with thousands of peers. Keying on IP alone causes false positives.",
 )
 kanban_block(reason="Rate limit key choice: IP (simple, NAT-unsafe) or user_id (requires auth, skips anonymous endpoints)?")
@@ -177,7 +177,7 @@ If you open the task and `kanban_show` returns `runs: [...]` with one or more cl
 
 ## Notification routing
 
-You can configure the gateway to receive cross-profile Kanban task notifications by adding `notification_sources` to `~/.hermes/config.yaml`.
+You can configure the gateway to receive cross-profile Kanban task notifications by adding `notification_sources` to `~/.cortex/config.yaml`.
 - `notification_sources: ['*']` accepts subscriptions from all profiles.
 - `notification_sources: ['default', 'zilor-ppt']` or `"default,zilor-ppt"` restricts subscriptions to specified profiles.
 - Omitting the key keeps the default behavior (profile isolation).

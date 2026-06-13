@@ -38,7 +38,7 @@ class _FakeResponse:
 
 def test_x_search_posts_responses_request(monkeypatch):
     from tools.x_search_tool import x_search_tool
-    from hermes_cli import __version__
+    from cortex_cli import __version__
 
     captured = {}
 
@@ -69,7 +69,7 @@ def test_x_search_posts_responses_request(monkeypatch):
 
     tool_def = captured["json"]["tools"][0]
     assert captured["url"] == "https://api.x.ai/v1/responses"
-    assert captured["headers"]["User-Agent"] == f"Hermes-Agent/{__version__}"
+    assert captured["headers"]["User-Agent"] == f"Athena-Agent/{__version__}"
     assert captured["json"]["model"] == "grok-4.20-reasoning"
     assert captured["json"]["store"] is False
     assert tool_def["type"] == "x_search"
@@ -402,7 +402,7 @@ def test_x_search_honors_config_model_and_timeout(monkeypatch, tmp_path):
 
     monkeypatch.setenv("XAI_API_KEY", "xai-test-key")
 
-    # Patch the in-module config loader so tests don't touch ~/.hermes/config.yaml.
+    # Patch the in-module config loader so tests don't touch ~/.cortex/config.yaml.
     monkeypatch.setattr(
         "tools.x_search_tool._load_x_search_config",
         lambda: {"model": "grok-custom-test", "timeout_seconds": 45, "retries": 0},

@@ -7,27 +7,27 @@ from pathlib import Path
 from typing import Optional
 
 
-def _hermes_home_path() -> Path:
-    """Resolve the active HERMES_HOME (profile-aware) without circular imports."""
+def _cortex_home_path() -> Path:
+    """Resolve the active CORTEX_HOME (profile-aware) without circular imports."""
     try:
-        from hermes_constants import get_hermes_home  # local import to avoid cycles
-        return get_hermes_home()
+        from cortex_constants import get_cortex_home  # local import to avoid cycles
+        return get_cortex_home()
     except Exception:
-        return Path(os.path.expanduser("~/.hermes"))
+        return Path(os.path.expanduser("~/.cortex"))
 
 
 def _hermes_root_path() -> Path:
-    """Resolve the Hermes root dir (always the parent of any profile, never per-profile)."""
+    """Resolve the Athena root dir (always the parent of any profile, never per-profile)."""
     try:
-        from hermes_constants import get_default_hermes_root  # local import to avoid cycles
+        from cortex_constants import get_default_hermes_root  # local import to avoid cycles
         return get_default_hermes_root()
     except Exception:
-        return Path(os.path.expanduser("~/.hermes"))
+        return Path(os.path.expanduser("~/.cortex"))
 
 
 def build_write_denied_paths(home: str) -> set[str]:
     """Return exact sensitive paths that must never be written."""
-    hermes_home = _hermes_home_path()
+    cortex_home = _cortex_home_path()
     hermes_root = _hermes_root_path()
     return {
         os.path.realpath(p)
@@ -37,12 +37,12 @@ def build_write_denied_paths(home: str) -> set[str]:
             os.path.join(home, ".ssh", "id_ed25519"),
             os.path.join(home, ".ssh", "config"),
             # Active profile .env (or top-level .env when not in profile mode).
-            str(hermes_home / ".env"),
+            str(cortex_home / ".env"),
             # Top-level .env, even when running under a profile — overwriting it
             # leaks credentials across every profile that inherits from root (#15981).
             str(hermes_root / ".env"),
             # Active profile Anthropic PKCE credential store.
-            str(hermes_home / ".anthropic_oauth.json"),
+            str(cortex_home / ".anthropic_oauth.json"),
             # Top-level Anthropic PKCE credential store remains sensitive even
             # when a profile is active; default/non-profile sessions still read it.
             str(hermes_root / ".anthropic_oauth.json"),
@@ -104,8 +104,8 @@ def is_write_denied(path: str) -> bool:
         if resolved.startswith(prefix):
             return True
 
-    # Hermes control-plane files: block both the ACTIVE profile's view
-    # (hermes_home) AND the global root view. Without the root pass, a
+    # Athena control-plane files: block both the ACTIVE profile's view
+    # (cortex_home) AND the global root view. Without the root pass, a
     # profile-mode session leaves <root>/auth.json + <root>/config.yaml
     # writable — letting a prompt-injected write_file overwrite the global
     # files that every profile inherits from (same shape as #15981).
@@ -113,7 +113,7 @@ def is_write_denied(path: str) -> bool:
     mcp_tokens_dir_name = "mcp-tokens"
 
     hermes_dirs = []
-    for base in (_hermes_home_path(), _hermes_root_path()):
+    for base in (_cortex_home_path(), _hermes_root_path()):
         try:
             real = os.path.realpath(base)
             if real not in hermes_dirs:
@@ -163,14 +163,14 @@ _BLOCKED_PROJECT_ENV_BASENAMES: set[str] = {
 
 
 def get_read_block_error(path: str) -> Optional[str]:
-    """Return an error message when a read targets a denied Hermes path.
+    """Return an error message when a read targets a denied Athena path.
 
     Three categories are blocked:
 
-      * Internal Hermes cache files under ``HERMES_HOME/skills/.hub`` —
+      * Internal Athena cache files under ``CORTEX_HOME/skills/.hub`` —
         readable metadata that an attacker could use as a prompt-injection
         carrier.
-      * Credential / secret stores under HERMES_HOME and the global Hermes
+      * Credential / secret stores under CORTEX_HOME and the global Athena
         root: ``auth.json``, ``auth.lock``, ``.anthropic_oauth.json``,
         ``.env``, ``webhook_subscriptions.json``, ``auth/google_oauth.json``,
         and anything under ``mcp-tokens/``. These hold plaintext provider keys,
@@ -187,7 +187,7 @@ def get_read_block_error(path: str) -> Optional[str]:
 
     **This is NOT a security boundary.** The terminal tool runs as the
     same OS user with shell access; the agent can still ``cat auth.json``
-    or ``cat ~/.hermes/.env`` and exfiltrate the file. The read-deny exists
+    or ``cat ~/.cortex/.env`` and exfiltrate the file. The read-deny exists
     as defense-in-depth that:
 
       * Returns a clear error to models that respect tool denials, which
@@ -209,13 +209,13 @@ def get_read_block_error(path: str) -> Optional[str]:
     """
     resolved = Path(path).expanduser().resolve()
 
-    # Resolve BOTH the active HERMES_HOME (profile-aware) AND the global
-    # Hermes root so credential stores at <root>/auth.json etc. are also
-    # blocked when running under a profile (HERMES_HOME points at
+    # Resolve BOTH the active CORTEX_HOME (profile-aware) AND the global
+    # Athena root so credential stores at <root>/auth.json etc. are also
+    # blocked when running under a profile (CORTEX_HOME points at
     # <root>/profiles/<name> in profile mode). Same shape as the write
     # deny widening (#15981, #14157).
     hermes_dirs: list[Path] = []
-    for base in (_hermes_home_path(), _hermes_root_path()):
+    for base in (_cortex_home_path(), _hermes_root_path()):
         try:
             real = base.resolve()
             if real not in hermes_dirs:
@@ -235,13 +235,13 @@ def get_read_block_error(path: str) -> Optional[str]:
             except ValueError:
                 continue
             return (
-                f"Access denied: {path} is an internal Hermes cache file "
+                f"Access denied: {path} is an internal Athena cache file "
                 "and cannot be read directly to prevent prompt injection. "
                 "Use the skills_list or skill_view tools instead."
             )
 
     # Credential / secret stores. Exact-file matches under either
-    # HERMES_HOME or <root>.
+    # CORTEX_HOME or <root>.
     credential_file_names = (
         "auth.json",
         "auth.lock",
@@ -262,7 +262,7 @@ def get_read_block_error(path: str) -> Optional[str]:
                 continue
             if resolved == blocked:
                 return (
-                    f"Access denied: {path} is a Hermes credential store "
+                    f"Access denied: {path} is a Athena credential store "
                     "and cannot be read directly. Provider tools consume "
                     "these credentials through internal channels. "
                     "(Defense-in-depth — not a security boundary; the "
@@ -278,7 +278,7 @@ def get_read_block_error(path: str) -> Optional[str]:
             continue
         if resolved == mcp_tokens:
             return (
-                f"Access denied: {path} is the Hermes MCP token directory "
+                f"Access denied: {path} is the Athena MCP token directory "
                 "and cannot be read directly. (Defense-in-depth — not a "
                 "security boundary; the terminal tool can still bypass.)"
             )
@@ -287,7 +287,7 @@ def get_read_block_error(path: str) -> Optional[str]:
         except ValueError:
             continue
         return (
-            f"Access denied: {path} is a Hermes MCP token file "
+            f"Access denied: {path} is a Athena MCP token file "
             "and cannot be read directly. (Defense-in-depth — not a "
             "security boundary; the terminal tool can still bypass.)"
         )
@@ -311,7 +311,7 @@ def get_read_block_error(path: str) -> Optional[str]:
 # ---------------------------------------------------------------------------
 # Cross-profile write guard (#TBD)
 #
-# Hermes profiles are separate HERMES_HOME dirs under
+# Athena profiles are separate CORTEX_HOME dirs under
 # ``<root>/profiles/<name>/``. Each profile has its own skills/, plugins/,
 # cron/, memories/. When an agent runs under one profile, writing into
 # ANOTHER profile's directories is almost always wrong — those skills /
@@ -325,28 +325,28 @@ def get_read_block_error(path: str) -> Optional[str]:
 # exists, and explicit user direction is required to cross it.
 #
 # Reference: May 2026 incident where a hermes-security profile session
-# edited skills under both ``~/.hermes/profiles/hermes-security/skills/``
-# AND ``~/.hermes/skills/`` (the default profile's skills) without realizing
+# edited skills under both ``~/.cortex/profiles/hermes-security/skills/``
+# AND ``~/.cortex/skills/`` (the default profile's skills) without realizing
 # the second path belonged to a different profile.
 # ---------------------------------------------------------------------------
 
-# Profile-scoped directories under HERMES_HOME / <root> / <root>/profiles/<X>/
+# Profile-scoped directories under CORTEX_HOME / <root> / <root>/profiles/<X>/
 # that should be guarded. Adding a new area here extends the guard with no
 # other code change.
 PROFILE_SCOPED_AREAS = ("skills", "plugins", "cron", "memories")
 
 
 def _resolve_active_profile_name() -> str:
-    """Return the active profile name derived from HERMES_HOME.
+    """Return the active profile name derived from CORTEX_HOME.
 
-    ``~/.hermes``              -> ``"default"``
-    ``~/.hermes/profiles/X``  -> ``"X"``
+    ``~/.cortex``              -> ``"default"``
+    ``~/.cortex/profiles/X``  -> ``"X"``
 
     Falls back to ``"default"`` on any resolution failure so the guard
     never raises into the tool path.
     """
     try:
-        home_real = _hermes_home_path().resolve()
+        home_real = _cortex_home_path().resolve()
         root_real = _hermes_root_path().resolve()
     except (OSError, RuntimeError):
         return "default"
@@ -365,7 +365,7 @@ def classify_cross_profile_target(path: str) -> Optional[dict]:
     """Classify a write target as cross-profile if it lands in another
     profile's scoped area (skills/plugins/cron/memories).
 
-    Returns ``None`` when the target is outside Hermes scope, or is inside
+    Returns ``None`` when the target is outside Athena scope, or is inside
     the ACTIVE profile, or doesn't hit a profile-scoped area. Otherwise
     returns a dict with:
 
@@ -428,7 +428,7 @@ def get_cross_profile_warning(path: str) -> Optional[str]:
     """Return a model-facing warning string when ``path`` is cross-profile.
 
     Returns ``None`` when the write is in-scope (same profile) or outside
-    Hermes entirely. Caller is expected to surface the warning to the
+    Athena entirely. Caller is expected to surface the warning to the
     agent as a tool-result error, NOT to silently allow the write — the
     agent must either get explicit user direction to proceed, or pass
     ``cross_profile=True`` to its write tool.
@@ -442,7 +442,7 @@ def get_cross_profile_warning(path: str) -> Optional[str]:
         return None
     return (
         f"Cross-profile write blocked by soft guard: {info['target_path']} "
-        f"belongs to Hermes profile {info['target_profile']!r}, but the "
+        f"belongs to Athena profile {info['target_profile']!r}, but the "
         f"agent is running under profile {info['active_profile']!r}. "
         f"Editing another profile's {info['area']}/ will affect that "
         f"profile's future sessions, not the one you are currently in. "
@@ -459,7 +459,7 @@ def get_cross_profile_warning(path: str) -> Optional[str]:
 # Non-local terminal backends (Docker, Daytona, etc.) bind a sandbox-local
 # directory to the container's ``$HOME``. The on-disk layout looks like
 #
-#   <HERMES_HOME>/profiles/<name>/sandboxes/<backend>/<task>/home/.hermes/...
+#   <CORTEX_HOME>/profiles/<name>/sandboxes/<backend>/<task>/home/.hermes/...
 #
 # When the agent (running host-side) speculates that authoritative profile
 # state lives at one of those sandbox-mirror paths, the write lands on the
@@ -469,7 +469,7 @@ def get_cross_profile_warning(path: str) -> Optional[str]:
 #
 # This guard is path-shape-only: it detects the
 # ``…/sandboxes/<backend>/<task>/home/.hermes/…`` segment and warns
-# regardless of which Hermes profile is active. It does NOT cover the
+# regardless of which Athena profile is active. It does NOT cover the
 # inner-container case where the bind mount strips the ``sandboxes/`` prefix
 # (the agent's view inside the container is plain ``/root/.hermes/...``);
 # that case needs a separate dispatch-layer or host-side ``profile_state``
@@ -481,7 +481,7 @@ def _find_sandbox_mirror_segments(parts: tuple) -> Optional[int]:
     """Return the index of the inner ``.hermes`` part in a sandbox-mirror path.
 
     Matches ``…/sandboxes/<backend>/<task>/home/.hermes/…`` and returns the
-    index where the inner Hermes-state portion starts. Returns ``None`` for
+    index where the inner Athena-state portion starts. Returns ``None`` for
     paths that do not contain the sandbox-mirror shape.
     """
     for i, part in enumerate(parts):
@@ -496,7 +496,7 @@ def _find_sandbox_mirror_segments(parts: tuple) -> Optional[int]:
 
 
 def classify_sandbox_mirror_target(path: str) -> Optional[dict]:
-    """Classify a write target as a sandbox-mirror of authoritative Hermes state.
+    """Classify a write target as a sandbox-mirror of authoritative Athena state.
 
     Returns ``None`` when the path does not match the sandbox-mirror shape.
     Otherwise returns a dict with:
@@ -507,9 +507,9 @@ def classify_sandbox_mirror_target(path: str) -> Optional[dict]:
       * ``inner_path``: the portion under the mirror's ``.hermes`` (what the
         agent likely meant to address on the host)
 
-    Detection is path-shape-only — does not require any Hermes resolver to
+    Detection is path-shape-only — does not require any Athena resolver to
     succeed, so it works correctly even when called from contexts where
-    HERMES_HOME resolution would be ambiguous.
+    CORTEX_HOME resolution would be ambiguous.
     """
     try:
         target = Path(os.path.expanduser(str(path))).resolve()
@@ -552,9 +552,9 @@ def get_sandbox_mirror_warning(path: str) -> Optional[str]:
         f"Sandbox-mirror write blocked by soft guard: {info['target_path']} "
         f"sits under {info['mirror_root']!r}, which is a per-task mirror "
         f"created by a non-local terminal backend (docker/daytona/etc.). "
-        f"Writes here land on a copy that the host Hermes process never "
+        f"Writes here land on a copy that the host Athena process never "
         f"reads — the authoritative file is likely {info['inner_path']!r} "
-        f"under the real HERMES_HOME. Use the host-side tool for "
+        f"under the real CORTEX_HOME. Use the host-side tool for "
         f"authoritative state (e.g. ``memory`` for memories), or address "
         f"the host path directly. To bypass this guard after explicit "
         f"user direction, retry the call with ``cross_profile=True``. "
@@ -593,7 +593,7 @@ def classify_container_mirror_target(
       * ``target_path``: resolved path string
       * ``mirror_root``: the declared container mirror prefix
       * ``inner_path``: portion under the mirror root (what the agent
-        likely meant to address in the host HERMES_HOME)
+        likely meant to address in the host CORTEX_HOME)
     """
     if not mirror_prefix:
         return None
@@ -615,7 +615,7 @@ def get_container_mirror_warning(
     mirror_prefix: str | None = None,
 ) -> Optional[str]:
     """Return a model-facing warning when *path* lands in the container's
-    sandbox mirror of authoritative Hermes state.
+    sandbox mirror of authoritative Athena state.
 
     The caller supplies ``mirror_prefix`` only when the current file-tool
     backend is known to execute inside a Docker sandbox. Same contract as
@@ -629,9 +629,9 @@ def get_container_mirror_warning(
     return (
         f"Sandbox-mirror write blocked by soft guard: {info['target_path']} "
         f"sits under {info['mirror_root']!r}, which is the container's "
-        f"bind-mounted home — a per-task mirror that the host Hermes "
+        f"bind-mounted home — a per-task mirror that the host Athena "
         f"process never reads. The authoritative file is "
-        f"{info['inner_path']!r} under the real HERMES_HOME. Use the "
+        f"{info['inner_path']!r} under the real CORTEX_HOME. Use the "
         f"host-side tool for authoritative state (e.g. ``memory`` for "
         f"memories), or address the host path directly. To bypass after "
         f"explicit user direction, retry with ``cross_profile=True``. "

@@ -1,108 +1,108 @@
-"""Tests for hermes_constants module."""
+"""Tests for cortex_constants module."""
 
 import os
 from pathlib import Path
 
 import pytest
 
-import hermes_constants
-from hermes_constants import (
+import cortex_constants
+from cortex_constants import (
     VALID_REASONING_EFFORTS,
     get_default_hermes_root,
-    get_hermes_home,
+    get_cortex_home,
     is_container,
     parse_reasoning_effort,
     secure_parent_dir,
 )
 
 
-class TestGetDefaultHermesRoot:
+class TestGetDefaultAthenaRoot:
     """Tests for get_default_hermes_root() — Docker/custom deployment awareness."""
 
-    def test_no_hermes_home_returns_native(self, tmp_path, monkeypatch):
-        """When HERMES_HOME is not set, returns ~/.hermes."""
-        monkeypatch.delenv("HERMES_HOME", raising=False)
+    def test_no_cortex_home_returns_native(self, tmp_path, monkeypatch):
+        """When CORTEX_HOME is not set, returns ~/.hermes."""
+        monkeypatch.delenv("CORTEX_HOME", raising=False)
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
         assert get_default_hermes_root() == tmp_path / ".hermes"
 
-    def test_hermes_home_is_native(self, tmp_path, monkeypatch):
-        """When HERMES_HOME = ~/.hermes, returns ~/.hermes."""
+    def test_cortex_home_is_native(self, tmp_path, monkeypatch):
+        """When CORTEX_HOME = ~/.hermes, returns ~/.hermes."""
         native = tmp_path / ".hermes"
         native.mkdir()
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
-        monkeypatch.setenv("HERMES_HOME", str(native))
+        monkeypatch.setenv("CORTEX_HOME", str(native))
         assert get_default_hermes_root() == native
 
-    def test_hermes_home_is_profile(self, tmp_path, monkeypatch):
-        """When HERMES_HOME is a profile under ~/.hermes, returns ~/.hermes."""
+    def test_cortex_home_is_profile(self, tmp_path, monkeypatch):
+        """When CORTEX_HOME is a profile under ~/.hermes, returns ~/.hermes."""
         native = tmp_path / ".hermes"
         profile = native / "profiles" / "coder"
         profile.mkdir(parents=True)
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
-        monkeypatch.setenv("HERMES_HOME", str(profile))
+        monkeypatch.setenv("CORTEX_HOME", str(profile))
         assert get_default_hermes_root() == native
 
-    def test_hermes_home_is_docker(self, tmp_path, monkeypatch):
-        """When HERMES_HOME points outside ~/.hermes (Docker), returns HERMES_HOME."""
+    def test_cortex_home_is_docker(self, tmp_path, monkeypatch):
+        """When CORTEX_HOME points outside ~/.hermes (Docker), returns CORTEX_HOME."""
         docker_home = tmp_path / "opt" / "data"
         docker_home.mkdir(parents=True)
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
-        monkeypatch.setenv("HERMES_HOME", str(docker_home))
+        monkeypatch.setenv("CORTEX_HOME", str(docker_home))
         assert get_default_hermes_root() == docker_home
 
-    def test_hermes_home_is_custom_path(self, tmp_path, monkeypatch):
-        """Any HERMES_HOME outside ~/.hermes is treated as the root."""
+    def test_cortex_home_is_custom_path(self, tmp_path, monkeypatch):
+        """Any CORTEX_HOME outside ~/.hermes is treated as the root."""
         custom = tmp_path / "my-hermes-data"
         custom.mkdir()
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
-        monkeypatch.setenv("HERMES_HOME", str(custom))
+        monkeypatch.setenv("CORTEX_HOME", str(custom))
         assert get_default_hermes_root() == custom
 
     def test_docker_profile_active(self, tmp_path, monkeypatch):
-        """When a Docker profile is active (HERMES_HOME=<root>/profiles/<name>),
+        """When a Docker profile is active (CORTEX_HOME=<root>/profiles/<name>),
         returns the Docker root, not the profile dir."""
         docker_root = tmp_path / "opt" / "data"
         profile = docker_root / "profiles" / "coder"
         profile.mkdir(parents=True)
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
-        monkeypatch.setenv("HERMES_HOME", str(profile))
+        monkeypatch.setenv("CORTEX_HOME", str(profile))
         assert get_default_hermes_root() == docker_root
 
-    def test_no_hermes_home_returns_localappdata_root_on_windows(self, tmp_path, monkeypatch):
+    def test_no_cortex_home_returns_localappdata_root_on_windows(self, tmp_path, monkeypatch):
         """Native Windows falls back to %LOCALAPPDATA%\\hermes, not ~/.hermes."""
         local_appdata = tmp_path / "LocalAppData"
-        monkeypatch.delenv("HERMES_HOME", raising=False)
+        monkeypatch.delenv("CORTEX_HOME", raising=False)
         monkeypatch.setenv("LOCALAPPDATA", str(local_appdata))
         monkeypatch.setattr(Path, "home", lambda: tmp_path / "Home")
-        monkeypatch.setattr(hermes_constants.sys, "platform", "win32")
+        monkeypatch.setattr(cortex_constants.sys, "platform", "win32")
 
-        assert get_default_hermes_root() == local_appdata / "hermes"
+        assert get_default_hermes_root() == local_appdata / "athena"
 
-    def test_no_hermes_home_uses_windows_path_when_localappdata_missing(self, tmp_path, monkeypatch):
+    def test_no_cortex_home_uses_windows_path_when_localappdata_missing(self, tmp_path, monkeypatch):
         """Windows fallback still uses AppData/Local/hermes without LOCALAPPDATA."""
         home = tmp_path / "Home"
-        monkeypatch.delenv("HERMES_HOME", raising=False)
+        monkeypatch.delenv("CORTEX_HOME", raising=False)
         monkeypatch.delenv("LOCALAPPDATA", raising=False)
         monkeypatch.setattr(Path, "home", lambda: home)
-        monkeypatch.setattr(hermes_constants.sys, "platform", "win32")
+        monkeypatch.setattr(cortex_constants.sys, "platform", "win32")
 
-        assert get_default_hermes_root() == home / "AppData" / "Local" / "hermes"
+        assert get_default_hermes_root() == home / "AppData" / "Local" / "athena"
 
 
-class TestGetHermesHome:
-    """Tests for get_hermes_home() platform-aware fallback."""
+class TestGetAthenaHome:
+    """Tests for get_cortex_home() platform-aware fallback."""
 
     def test_windows_fallback_uses_localappdata(self, tmp_path, monkeypatch):
-        """When HERMES_HOME is unset on Windows, use %LOCALAPPDATA%\\hermes."""
+        """When CORTEX_HOME is unset on Windows, use %LOCALAPPDATA%\\hermes."""
         local_appdata = tmp_path / "LocalAppData"
-        monkeypatch.delenv("HERMES_HOME", raising=False)
+        monkeypatch.delenv("CORTEX_HOME", raising=False)
         monkeypatch.setenv("LOCALAPPDATA", str(local_appdata))
         monkeypatch.setattr(Path, "home", lambda: tmp_path / "Home")
-        monkeypatch.setattr(hermes_constants.sys, "platform", "win32")
-        monkeypatch.setattr(hermes_constants, "_profile_fallback_warned", False)
+        monkeypatch.setattr(cortex_constants.sys, "platform", "win32")
+        monkeypatch.setattr(cortex_constants, "_profile_fallback_warned", False)
 
-        assert get_hermes_home() == local_appdata / "hermes"
+        assert get_cortex_home() == local_appdata / "athena"
 
 
 class TestIsContainer:
@@ -110,7 +110,7 @@ class TestIsContainer:
 
     def _reset_cache(self, monkeypatch):
         """Reset the cached detection result before each test."""
-        monkeypatch.setattr(hermes_constants, "_container_detected", None)
+        monkeypatch.setattr(cortex_constants, "_container_detected", None)
 
     def test_detects_dockerenv(self, monkeypatch, tmp_path):
         """/.dockerenv triggers container detection."""
@@ -148,7 +148,7 @@ class TestIsContainer:
 
     def test_caches_result(self, monkeypatch):
         """Second call uses cached value without re-probing."""
-        monkeypatch.setattr(hermes_constants, "_container_detected", True)
+        monkeypatch.setattr(cortex_constants, "_container_detected", True)
         assert is_container() is True
         # Even if we make os.path.exists return False, cached value wins
         monkeypatch.setattr(os.path, "exists", lambda p: False)

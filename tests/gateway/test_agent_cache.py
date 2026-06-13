@@ -305,7 +305,7 @@ class TestExtractCacheBustingConfig:
             calls.append(True)
             return {
                 "honcho.peer_name": "eri",
-                "honcho.ai_peer": "hermes",
+                "honcho.ai_peer": "athena",
                 "honcho.pin_peer_name": True,
                 "honcho.runtime_peer_prefix": "tg_",
                 "honcho.user_peer_aliases": [("123", "eri")],
@@ -351,7 +351,7 @@ class TestExtractCacheBustingConfig:
 
         class FakeConfig:
             peer_name = "eri"
-            ai_peer = "hermes"
+            ai_peer = "athena"
             pin_peer_name = False
             runtime_peer_prefix = "tg_"
             user_peer_aliases = {"123": "eri"}

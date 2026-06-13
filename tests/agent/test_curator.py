@@ -15,11 +15,11 @@ import pytest
 
 @pytest.fixture
 def curator_env(tmp_path, monkeypatch):
-    """Isolated HERMES_HOME + freshly reloaded curator + skill_usage modules."""
+    """Isolated CORTEX_HOME + freshly reloaded curator + skill_usage modules."""
     home = tmp_path / ".hermes"
     (home / "skills").mkdir(parents=True)
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("CORTEX_HOME", str(home))
 
     import tools.skill_usage as usage
     importlib.reload(usage)
@@ -476,7 +476,7 @@ def test_run_review_records_state(curator_env):
 def test_dry_run_does_not_advance_state(curator_env, monkeypatch):
     """Dry-run previews must not bump last_run_at or run_count. A preview
     shouldn't defer the next scheduled real pass or look like a real run in
-    `hermes curator status`. Fixes #18373.
+    `athena curator status`. Fixes #18373.
     """
     c = curator_env["curator"]
     u = curator_env["usage"]
@@ -790,8 +790,8 @@ def test_curator_review_prompt_offers_support_file_actions():
 
 
 def test_cli_unpin_refuses_bundled_skill(curator_env, capsys):
-    """hermes curator unpin must refuse bundled/hub skills too (matches pin)."""
-    from hermes_cli import curator as cli
+    """athena curator unpin must refuse bundled/hub skills too (matches pin)."""
+    from cortex_cli import curator as cli
     skills_dir = curator_env["home"] / "skills"
     _write_skill(skills_dir, "ship-skill")
     (skills_dir / ".bundled_manifest").write_text(
@@ -808,7 +808,7 @@ def test_cli_unpin_refuses_bundled_skill(curator_env, capsys):
 
 
 def test_cli_pin_refuses_bundled_skill(curator_env, capsys):
-    from hermes_cli import curator as cli
+    from cortex_cli import curator as cli
     skills_dir = curator_env["home"] / "skills"
     _write_skill(skills_dir, "ship-skill")
     (skills_dir / ".bundled_manifest").write_text(
@@ -1030,9 +1030,9 @@ def test_curator_slot_is_canonical_aux_task():
     (test_aux_config.py) for the main tasks — this test pins `curator`
     specifically so the unification doesn't silently regress.
     """
-    from hermes_cli.config import DEFAULT_CONFIG
-    from hermes_cli.main import _AUX_TASKS
-    from hermes_cli.web_server import _AUX_TASK_SLOTS
+    from cortex_cli.config import DEFAULT_CONFIG
+    from cortex_cli.main import _AUX_TASKS
+    from cortex_cli.web_server import _AUX_TASK_SLOTS
 
     # 1. DEFAULT_CONFIG.auxiliary — schema source
     assert "curator" in DEFAULT_CONFIG["auxiliary"], \
@@ -1042,11 +1042,11 @@ def test_curator_slot_is_canonical_aux_task():
     assert slot["model"] == ""
     assert slot["timeout"] > 0, "curator timeout should be set (reviews run long)"
 
-    # 2. hermes_cli/main.py _AUX_TASKS — CLI picker
+    # 2. cortex_cli/main.py _AUX_TASKS — CLI picker
     aux_keys = {k for k, _name, _desc in _AUX_TASKS}
     assert "curator" in aux_keys, "curator missing from _AUX_TASKS (CLI picker)"
 
-    # 3. hermes_cli/web_server.py _AUX_TASK_SLOTS — REST API allowlist
+    # 3. cortex_cli/web_server.py _AUX_TASK_SLOTS — REST API allowlist
     assert "curator" in _AUX_TASK_SLOTS, \
         "curator missing from _AUX_TASK_SLOTS (dashboard REST API)"
 

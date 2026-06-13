@@ -21,7 +21,7 @@ class TestSecretCaptureGuidance:
     def test_gateway_secret_capture_message_points_to_local_setup(self):
         message = GATEWAY_SECRET_CAPTURE_UNSUPPORTED_MESSAGE
         assert "local cli" in message.lower()
-        assert "~/.hermes/.env" in message
+        assert "~/.cortex/.env" in message
 
 
 class TestSafeUrlForLog:
@@ -744,7 +744,7 @@ class TestMediaDeliveryPathValidation:
         """The motivating case: agent produces a PDF in a project directory.
 
         Reproduces the Discord-PDF-not-delivered bug. Before recency trust,
-        files outside ~/.hermes/cache/* were silently dropped, leaving the
+        files outside ~/.cortex/cache/* were silently dropped, leaving the
         user with a raw filepath in chat instead of an attachment.
         """
         self._patch_roots(monkeypatch)
@@ -854,7 +854,7 @@ class TestMediaDeliveryDefaultMode:
         assert BasePlatformAdapter.validate_media_delivery_path(str(secret)) is None
 
     def test_denylist_blocks_hermes_credentials(self, tmp_path, monkeypatch):
-        """~/.hermes/.env and ~/.hermes/auth.json stay blocked even in
+        """~/.cortex/.env and ~/.cortex/auth.json stay blocked even in
         default mode. They live under $HOME (not the system prefix list)
         so this exercises the home-relative denied paths.
         """
@@ -867,7 +867,7 @@ class TestMediaDeliveryDefaultMode:
         env_file.write_text("OPENAI_API_KEY=sk-...")
         monkeypatch.setenv("HOME", str(fake_home))
         monkeypatch.setattr(
-            "gateway.platforms.base._HERMES_HOME",
+            "gateway.platforms.base._CORTEX_HOME",
             hermes_dir,
         )
 
@@ -884,14 +884,14 @@ class TestMediaDeliveryDefaultMode:
         config_file.write_text("model:\n  provider: openai\n")
         monkeypatch.setenv("HOME", str(fake_home))
         monkeypatch.setattr(
-            "gateway.platforms.base._HERMES_HOME",
+            "gateway.platforms.base._CORTEX_HOME",
             hermes_dir,
         )
 
         assert BasePlatformAdapter.validate_media_delivery_path(str(config_file)) is None
 
     def test_denylist_blocks_shared_hermes_root_config_for_profiles(self, tmp_path, monkeypatch):
-        """Profile-mode gateways must still block the shared Hermes root config."""
+        """Profile-mode gateways must still block the shared Athena root config."""
         self._patch_roots(monkeypatch)
 
         fake_home = tmp_path / "home"
@@ -902,7 +902,7 @@ class TestMediaDeliveryDefaultMode:
         config_file.write_text("profiles:\n  active: work\n")
         monkeypatch.setenv("HOME", str(fake_home))
         monkeypatch.setattr(
-            "gateway.platforms.base._HERMES_HOME",
+            "gateway.platforms.base._CORTEX_HOME",
             profile_home,
         )
         monkeypatch.setattr(
@@ -1001,7 +1001,7 @@ class TestMediaDeliveryDefaultMode:
         assert BasePlatformAdapter.validate_media_delivery_path(str(key)) is None
 
     def test_root_home_hermes_env_still_blocked(self, tmp_path, monkeypatch):
-        """``~/.hermes/.env`` stays blocked under the $HOME exception — it is a
+        """``~/.cortex/.env`` stays blocked under the $HOME exception — it is a
         more-specific denied path, not reachable just because home is allowed.
         """
         self._patch_roots(monkeypatch)
@@ -1016,7 +1016,7 @@ class TestMediaDeliveryDefaultMode:
             "gateway.platforms.base._MEDIA_DELIVERY_DENIED_PREFIXES",
             (str(fake_home),),
         )
-        monkeypatch.setattr("gateway.platforms.base._HERMES_HOME", hermes_dir)
+        monkeypatch.setattr("gateway.platforms.base._CORTEX_HOME", hermes_dir)
 
         assert BasePlatformAdapter.validate_media_delivery_path(str(env_file)) is None
 

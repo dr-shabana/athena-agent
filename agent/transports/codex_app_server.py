@@ -6,11 +6,11 @@ do an `initialize` handshake, then drive `thread/start` + `turn/start` and
 consume streaming `item/*` notifications until `turn/completed`.
 
 This module is the wire-level speaker only. Higher-level concerns (event
-projection into Hermes' display, approval bridging, transcript projection into
+projection into Athena' display, approval bridging, transcript projection into
 AIAgent.messages, plugin migration) live in sibling modules.
 
 Status: optional opt-in runtime gated behind `model.openai_runtime ==
-"codex_app_server"`. Hermes' default tool dispatch is unchanged when this
+"codex_app_server"`. Athena' default tool dispatch is unchanged when this
 runtime is not selected.
 """
 
@@ -86,7 +86,7 @@ class CodexAppServerClient:
         # Codex sandbox on, but add the Kanban root as the only extra writable
         # root. Without this, codex-runtime workers finish their actual work
         # but crash/block when kanban_complete/kanban_block writes SQLite.
-        if spawn_env.get("HERMES_KANBAN_TASK"):
+        if spawn_env.get("CORTEX_KANBAN_TASK"):
             kanban_db = spawn_env.get("HERMES_KANBAN_DB")
             kanban_root = (
                 os.path.dirname(kanban_db)
@@ -94,7 +94,7 @@ class CodexAppServerClient:
                 else spawn_env.get(
                     "HERMES_KANBAN_ROOT",
                     os.path.join(
-                        spawn_env.get("HERMES_HOME", os.path.expanduser("~/.hermes")),
+                        spawn_env.get("CORTEX_HOME", os.path.expanduser("~/.cortex")),
                         "kanban",
                     ),
                 )
@@ -141,8 +141,8 @@ class CodexAppServerClient:
 
     def initialize(
         self,
-        client_name: str = "hermes",
-        client_title: str = "Hermes Agent",
+        client_name: str = "athena",
+        client_title: str = "Athena Agent",
         client_version: str = "0.1",
         capabilities: Optional[dict] = None,
         timeout: float = 10.0,

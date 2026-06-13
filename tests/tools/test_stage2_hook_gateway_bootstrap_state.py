@@ -43,10 +43,10 @@ def stage2_text() -> str:
 
 
 def _seed_block(text: str) -> str:
-    """Extract the ``if [ ! -f "$HERMES_HOME/gateway_state.json" ] && … fi``
+    """Extract the ``if [ ! -f "$CORTEX_HOME/gateway_state.json" ] && … fi``
     block that seeds the gateway state file from the bootstrap env var."""
     m = re.search(
-        r'(if \[ ! -f "\$HERMES_HOME/gateway_state\.json" \] && \\\n'
+        r'(if \[ ! -f "\$CORTEX_HOME/gateway_state\.json" \] && \\\n'
         r"(?:.*\n)*?fi)",
         text,
     )
@@ -60,7 +60,7 @@ def _seed_block(text: str) -> str:
 def test_seed_block_present_and_guarded(stage2_text: str) -> None:
     block = _seed_block(stage2_text)
     # Must be a first-boot-only seed (the [ ! -f ] guard) keyed on the env var.
-    assert '[ ! -f "$HERMES_HOME/gateway_state.json" ]' in block, (
+    assert '[ ! -f "$CORTEX_HOME/gateway_state.json" ]' in block, (
         "seed must be guarded by [ ! -f ] so persisted state wins on restart"
     )
     assert "HERMES_GATEWAY_BOOTSTRAP_STATE" in block
@@ -70,7 +70,7 @@ def test_seed_block_present_and_guarded(stage2_text: str) -> None:
 def _run_seed(
     text: str, *, env_value: str | None, preexisting: str | None
 ) -> str | None:
-    """Run the extracted seed block in a sandbox $HERMES_HOME.
+    """Run the extracted seed block in a sandbox $CORTEX_HOME.
 
     ``env_value`` is the HERMES_GATEWAY_BOOTSTRAP_STATE value (None = unset).
     ``preexisting`` is the contents of a gateway_state.json placed before the
@@ -98,7 +98,7 @@ def _run_seed(
         )
         script = (
             "set -e\n"
-            f'HERMES_HOME="{home}"\n'
+            f'CORTEX_HOME="{home}"\n'
             # Stub privilege ops — the sandbox isn't root.
             "chown() { :; }\n"
             "chmod() { :; }\n"

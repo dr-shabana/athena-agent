@@ -3,11 +3,11 @@
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
-from cli import HermesCLI
+from cli import AthenaCLI
 
 
 def _make_cli(session_id="20260524_000001_abc123"):
-    cli_obj = HermesCLI.__new__(HermesCLI)
+    cli_obj = AthenaCLI.__new__(AthenaCLI)
     cli_obj.session_id = session_id
     # _print_exit_summary requires a populated conversation history (msg_count > 0)
     # to print the resume hint at all. One synthetic user turn is enough.
@@ -28,7 +28,7 @@ class TestExitSummaryResumeHint:
 
     def test_resume_hint_no_profile_flag_on_default(self, capsys):
         cli_obj = _make_cli()
-        with patch("hermes_cli.profiles.get_active_profile_name", return_value="default"):
+        with patch("cortex_cli.profiles.get_active_profile_name", return_value="default"):
             cli_obj._print_exit_summary()
         out = capsys.readouterr().out
         # No `-p` for the default profile.
@@ -37,16 +37,16 @@ class TestExitSummaryResumeHint:
 
     def test_resume_hint_no_profile_flag_on_custom(self, capsys):
         cli_obj = _make_cli()
-        with patch("hermes_cli.profiles.get_active_profile_name", return_value="custom"):
+        with patch("cortex_cli.profiles.get_active_profile_name", return_value="custom"):
             cli_obj._print_exit_summary()
         out = capsys.readouterr().out
-        # "custom" is the standard HERMES_HOME indicator — no -p needed.
+        # "custom" is the standard CORTEX_HOME indicator — no -p needed.
         assert "hermes --resume 20260524_000001_abc123" in out
         assert " -p " not in out
 
     def test_resume_hint_includes_profile_flag_for_named_profile(self, capsys):
         cli_obj = _make_cli()
-        with patch("hermes_cli.profiles.get_active_profile_name", return_value="dev"):
+        with patch("cortex_cli.profiles.get_active_profile_name", return_value="dev"):
             cli_obj._print_exit_summary()
         out = capsys.readouterr().out
         assert "hermes --resume 20260524_000001_abc123 -p dev" in out
@@ -60,7 +60,7 @@ class TestExitSummaryResumeHint:
         fake_db.get_session_title.return_value = "My Cool Session"
         cli_obj._session_db = fake_db
 
-        with patch("hermes_cli.profiles.get_active_profile_name", return_value="dev"):
+        with patch("cortex_cli.profiles.get_active_profile_name", return_value="dev"):
             cli_obj._print_exit_summary()
         out = capsys.readouterr().out
         assert 'hermes -c "My Cool Session" -p dev' in out
@@ -73,7 +73,7 @@ class TestExitSummaryResumeHint:
         """
         cli_obj = _make_cli()
         with patch(
-            "hermes_cli.profiles.get_active_profile_name",
+            "cortex_cli.profiles.get_active_profile_name",
             side_effect=RuntimeError("profiles unavailable"),
         ):
             cli_obj._print_exit_summary()

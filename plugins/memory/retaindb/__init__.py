@@ -457,7 +457,7 @@ class RetainDBMemoryProvider(MemoryProvider):
         self._queue: _WriteQueue | None = None
         self._user_id = "default"
         self._session_id = ""
-        self._agent_id = "hermes"
+        self._agent_id = "athena"
         self._lock = threading.Lock()
 
         # Prefetch caches
@@ -496,22 +496,22 @@ class RetainDBMemoryProvider(MemoryProvider):
         if explicit:
             project = explicit
         else:
-            hermes_home = str(kwargs.get("hermes_home", ""))
-            profile_name = os.path.basename(hermes_home) if hermes_home else ""
+            cortex_home = str(kwargs.get("cortex_home", ""))
+            profile_name = os.path.basename(cortex_home) if cortex_home else ""
             project = f"hermes-{profile_name}" if (profile_name and profile_name not in {"", ".hermes"}) else "default"
 
         self._client = _Client(api_key, base_url, project)
         self._session_id = session_id
         self._user_id = kwargs.get("user_id", "default") or "default"
-        self._agent_id = kwargs.get("agent_id", "hermes") or "hermes"
+        self._agent_id = kwargs.get("agent_id", "athena") or "athena"
 
-        from hermes_constants import get_hermes_home
-        hermes_home_path = get_hermes_home()
-        db_path = hermes_home_path / "retaindb_queue.db"
+        from cortex_constants import get_cortex_home
+        cortex_home_path = get_cortex_home()
+        db_path = cortex_home_path / "retaindb_queue.db"
         self._queue = _WriteQueue(self._client, db_path)
 
         # Seed agent identity from SOUL.md in background
-        soul_path = hermes_home_path / "SOUL.md"
+        soul_path = cortex_home_path / "SOUL.md"
         if soul_path.exists():
             soul_content = soul_path.read_text(encoding="utf-8", errors="replace").strip()
             if soul_content:

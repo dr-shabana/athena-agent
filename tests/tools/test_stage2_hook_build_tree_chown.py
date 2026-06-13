@@ -1,19 +1,19 @@
 """Contract test: the s6-overlay stage2 hook re-chowns the build trees under
 $INSTALL_DIR (/opt/hermes/.venv, ui-tui, node_modules) to the runtime hermes
 UID whenever they are not already hermes-owned — INDEPENDENTLY of whether
-$HERMES_HOME ownership already matches.
+$CORTEX_HOME ownership already matches.
 
 Regression guard for the HERMES_UID/PUID remap path broken by #35027.
 
-`usermod -u <new> hermes` re-chowns the hermes home dir ($HERMES_HOME ==
+`usermod -u <new> hermes` re-chowns the hermes home dir ($CORTEX_HOME ==
 /opt/data) to the new UID as a side effect. #35027 gated the build-tree chown
-behind `stat $HERMES_HOME != hermes_uid`, so after any remap that stat is
+behind `stat $CORTEX_HOME != hermes_uid`, so after any remap that stat is
 already satisfied and the build-tree chown was silently skipped — leaving
 .venv owned by the build-time UID (10000) and breaking:
   - lazy_deps.py `uv pip install` of platform extras (#15012, #21100)
   - the TUI esbuild rebuild into ui-tui/dist (#28851)
 
-The fix probes the build trees directly (stat .venv) rather than $HERMES_HOME.
+The fix probes the build trees directly (stat .venv) rather than $CORTEX_HOME.
 
 The extraction + stubbed-shell-run approach mirrors
 tests/tools/test_stage2_hook_toplevel_chown.py.
@@ -50,11 +50,11 @@ def _build_tree_block(text: str) -> str:
     return m.group(1)
 
 
-def test_build_tree_chown_not_gated_on_hermes_home(stage2_text: str) -> None:
+def test_build_tree_chown_not_gated_on_cortex_home(stage2_text: str) -> None:
     """The build-tree chown must NOT live inside the `if [ "$needs_chown" = true ]`
-    block keyed on $HERMES_HOME ownership — that is exactly the #35027 bug."""
+    block keyed on $CORTEX_HOME ownership — that is exactly the #35027 bug."""
     block = _build_tree_block(stage2_text)
-    # The block probes the venv owner, not $HERMES_HOME.
+    # The block probes the venv owner, not $CORTEX_HOME.
     assert "venv_owner" in block
     assert "$INSTALL_DIR/.venv" in block
     # All three build trees are covered.
@@ -95,13 +95,13 @@ def _run_build_tree_block(
 
 
 def test_chown_fires_when_venv_owner_differs(stage2_text: str) -> None:
-    """The #35027 regression scenario: after a remap $HERMES_HOME already
+    """The #35027 regression scenario: after a remap $CORTEX_HOME already
     matches the new UID, but the venv is still owned by the build-time UID
     (10000). The build-tree chown MUST still fire."""
     fired = _run_build_tree_block(stage2_text, venv_owner=10000, hermes_uid=4242)
     assert fired, (
         "build-tree chown must fire when the venv is not owned by the runtime "
-        "hermes UID, regardless of $HERMES_HOME ownership (#35027 regression)"
+        "hermes UID, regardless of $CORTEX_HOME ownership (#35027 regression)"
     )
 
 

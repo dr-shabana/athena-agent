@@ -17,7 +17,7 @@ import threading
 import time
 import unicodedata
 from typing import Optional
-from hermes_cli.config import cfg_get
+from cortex_cli.config import cfg_get
 
 from utils import env_var_enabled, is_truthy_value
 
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 # Freeze YOLO mode at module import time. Reading os.environ on every call
 # would allow any skill running inside the process to set this variable and
 # instantly bypass all approval checks — a prompt-injection escalation path.
-_YOLO_MODE_FROZEN: bool = is_truthy_value(os.getenv("HERMES_YOLO_MODE", ""))
+_YOLO_MODE_FROZEN: bool = is_truthy_value(os.getenv("CORTEX_YOLO_MODE", ""))
 
 # Per-thread/per-task gateway session identity.
 # Gateway runs agent turns concurrently in executor threads, so reading a
@@ -57,7 +57,7 @@ def _fire_approval_hook(hook_name: str, **kwargs) -> None:
     pre_approval_request, post_approval_response.
     """
     try:
-        from hermes_cli.plugins import invoke_hook
+        from cortex_cli.plugins import invoke_hook
     except Exception:
         # Plugin system not available in this execution context
         # (e.g. bare tool-only imports, minimal test environments).
@@ -151,32 +151,32 @@ def _is_gateway_approval_context() -> bool:
     return bool(_get_session_platform())
 
 # Sensitive write targets that should trigger approval even when referenced
-# via shell expansions like $HOME or $HERMES_HOME, or by the resolved absolute
+# via shell expansions like $HOME or $CORTEX_HOME, or by the resolved absolute
 # active profile home path such as /home/hermes/.hermes/config.yaml. The
-# resolved-absolute form is folded into the ~/.hermes/ patterns at detection
+# resolved-absolute form is folded into the ~/.cortex/ patterns at detection
 # time by _normalize_command_for_detection() — see the rewrite step there — so
 # these static patterns stay free of any import-time path snapshot (which would
-# go stale when HERMES_HOME is set after this module is imported, e.g. under the
+# go stale when CORTEX_HOME is set after this module is imported, e.g. under the
 # hermetic test conftest or any deferred-profile-resolution path).
 _SSH_SENSITIVE_PATH = r'(?:~|\$home|\$\{home\})/\.ssh(?:/|$)'
 _HERMES_ENV_PATH = (
     r'(?:~\/\.hermes/|'
     r'(?:\$home|\$\{home\})/\.hermes/|'
-    r'(?:\$hermes_home|\$\{hermes_home\})/)'
+    r'(?:\$cortex_home|\$\{cortex_home\})/)'
     r'\.env\b'
 )
-# ~/.hermes/config.yaml IS the security policy: approvals.mode, yolo, and the
+# ~/.cortex/config.yaml IS the security policy: approvals.mode, yolo, and the
 # permanent-approval allowlist live here, and the config cache is mtime-keyed
 # so a write takes effect mid-session (the agent could flip approvals.mode=off
 # and immediately bypass the gate). Pair the write_file/patch deny (file_tools
 # _check_sensitive_path) with terminal-side coverage so `sed -i`, `tee`, `>`,
 # `cp`, etc. targeting it are gated too — otherwise the deny is unpaired
-# theater. Mirrors _HERMES_ENV_PATH; matches the HERMES_HOME override form as
-# well as ~/.hermes/.
+# theater. Mirrors _HERMES_ENV_PATH; matches the CORTEX_HOME override form as
+# well as ~/.cortex/.
 _HERMES_CONFIG_PATH = (
     r'(?:~\/\.hermes/|'
     r'(?:\$home|\$\{home\})/\.hermes/|'
-    r'(?:\$hermes_home|\$\{hermes_home\})/)'
+    r'(?:\$cortex_home|\$\{cortex_home\})/)'
     r'config\.yaml\b'
 )
 _PROJECT_ENV_PATH = r'(?:(?:/|\.{1,2}/)?(?:[^\s/"\'`]+/)*\.env(?:\.[^/\s"\'`]+)*)'
@@ -422,7 +422,7 @@ DANGEROUS_PATTERNS = [
     # Docker container lifecycle — any user with docker.sock mounted (a common
     # Docker Compose pattern) gives the agent the ability to restart/stop/kill
     # containers without approval.  These are agent-initiated lifecycle operations
-    # that should always require user consent, just like `hermes gateway restart`
+    # that should always require user consent, just like `athena gateway restart`
     # already does for the gateway process.
     (r'\bdocker\s+compose\s+(restart|stop|kill|down)\b', "docker compose restart/stop/kill/down (container lifecycle)"),
     (r'\bdocker\s+(restart|stop|kill)\b', "docker restart/stop/kill (container lifecycle)"),
@@ -443,12 +443,12 @@ DANGEROUS_PATTERNS = [
     (rf'\b(cp|mv|install)\b.*\s["\']?{_PROJECT_SENSITIVE_WRITE_TARGET}["\']?{_COMMAND_TAIL}', "overwrite project env/config file"),
     (rf'\bsed\s+-[^\s]*i.*\s{_SYSTEM_CONFIG_PATH}', "in-place edit of system config"),
     (rf'\bsed\s+--in-place\b.*\s{_SYSTEM_CONFIG_PATH}', "in-place edit of system config (long flag)"),
-    # In-place edit of a Hermes-managed security file (~/.hermes/config.yaml or
+    # In-place edit of a Athena-managed security file (~/.cortex/config.yaml or
     # .env). sed -i bypasses the redirection/tee patterns above because it
     # mutates the file directly. Pairs the file_tools write_file/patch deny so
     # the terminal side is not an open door. See #14639.
-    (rf'\bsed\s+-[^\s]*i.*(?:{_HERMES_CONFIG_PATH}|{_HERMES_ENV_PATH})', "in-place edit of Hermes config/env"),
-    (rf'\bsed\s+--in-place\b.*(?:{_HERMES_CONFIG_PATH}|{_HERMES_ENV_PATH})', "in-place edit of Hermes config/env (long flag)"),
+    (rf'\bsed\s+-[^\s]*i.*(?:{_HERMES_CONFIG_PATH}|{_HERMES_ENV_PATH})', "in-place edit of Athena config/env"),
+    (rf'\bsed\s+--in-place\b.*(?:{_HERMES_CONFIG_PATH}|{_HERMES_ENV_PATH})', "in-place edit of Athena config/env (long flag)"),
     # perl -i and ruby -i perform the same in-place mutation as sed -i but are
     # not caught by the -e/-c script-execution pattern above (which targets code
     # evaluation, not file mutation). Pairs the sed -i coverage from #14639.
@@ -457,7 +457,7 @@ DANGEROUS_PATTERNS = [
     # backup suffix (`perl -i.bak`). Match any flag token containing `i`
     # anywhere in the args, not just the first token — `perl -e '...'` (code
     # eval, no -i) does not trip because it has no `-...i` flag token.
-    (rf'\b(?:perl|ruby)\b.*(?:^|\s)-[^\s]*i\b.*(?:{_HERMES_CONFIG_PATH}|{_HERMES_ENV_PATH})', "in-place edit of Hermes config/env (perl/ruby)"),
+    (rf'\b(?:perl|ruby)\b.*(?:^|\s)-[^\s]*i\b.*(?:{_HERMES_CONFIG_PATH}|{_HERMES_ENV_PATH})', "in-place edit of Athena config/env (perl/ruby)"),
     # Script execution via heredoc — bypasses the -e/-c flag patterns above.
     # `python3 << 'EOF'` feeds arbitrary code via stdin without -c/-e flags.
     (r'\b(python[23]?|perl|ruby|node)\s+<<', "script execution via heredoc"),
@@ -548,27 +548,27 @@ def _normalize_command_for_detection(command: str) -> str:
     # Strip empty-string literals that split tokens: r''m → rm, r"\"m → rm.
     command = re.sub(r"''|\"\"", '', command)
     # Fold the resolved absolute active-profile home path into the canonical
-    # ~/.hermes/ form so the Hermes config/env patterns catch it. In Docker and
+    # ~/.cortex/ form so the Athena config/env patterns catch it. In Docker and
     # gateway deployments the agent often references the resolved absolute path
     # directly (e.g. `sed -i ... /home/hermes/.hermes/config.yaml`) rather than
-    # ~, $HOME, or $HERMES_HOME. Done at detection time (not via an import-time
-    # pattern snapshot) so it tracks the live HERMES_HOME even when that is set
+    # ~, $HOME, or $CORTEX_HOME. Done at detection time (not via an import-time
+    # pattern snapshot) so it tracks the live CORTEX_HOME even when that is set
     # after this module is imported — as the hermetic test conftest does.
-    command = _rewrite_resolved_hermes_home(command)
+    command = _rewrite_resolved_cortex_home(command)
     return command
 
 
-def _rewrite_resolved_hermes_home(command: str) -> str:
-    """Rewrite the resolved absolute Hermes home prefix to ``~/.hermes/``.
+def _rewrite_resolved_cortex_home(command: str) -> str:
+    """Rewrite the resolved absolute Athena home prefix to ``~/.cortex/``.
 
-    Resolves the active ``HERMES_HOME`` at call time (and its symlink-resolved
+    Resolves the active ``CORTEX_HOME`` at call time (and its symlink-resolved
     form) and replaces an occurrence of ``<home>/`` in *command* with
-    ``~/.hermes/`` so the static ``_HERMES_CONFIG_PATH`` / ``_HERMES_ENV_PATH``
+    ``~/.cortex/`` so the static ``_HERMES_CONFIG_PATH`` / ``_HERMES_ENV_PATH``
     patterns match. No-op when the path can't be resolved or doesn't appear.
     """
     try:
-        from hermes_constants import get_hermes_home
-        home = get_hermes_home().expanduser()
+        from cortex_constants import get_cortex_home
+        home = get_cortex_home().expanduser()
         candidates = [
             str(home).rstrip("/"),
             str(home.resolve(strict=False)).rstrip("/"),
@@ -580,14 +580,14 @@ def _rewrite_resolved_hermes_home(command: str) -> str:
         if not path or path in seen:
             continue
         seen.add(path)
-        # Guard against a degenerate HERMES_HOME (e.g. "/" or "") rewriting
+        # Guard against a degenerate CORTEX_HOME (e.g. "/" or "") rewriting
         # unrelated paths: require an absolute path with at least one non-root
         # component. The active profile home is always a real directory like
         # /home/hermes/.hermes or a per-test tempdir, never a bare root.
         normalized = path.rstrip("/")
         if not normalized.startswith("/") or normalized.count("/") < 2:
             continue
-        command = command.replace(normalized + "/", "~/.hermes/")
+        command = command.replace(normalized + "/", "~/.cortex/")
     return command
 
 
@@ -793,7 +793,7 @@ def load_permanent_allowlist() -> set:
     patterns added via 'always' in a previous session.
     """
     try:
-        from hermes_cli.config import load_config
+        from cortex_cli.config import load_config
         config = load_config()
         patterns = set(config.get("command_allowlist", []) or [])
         if patterns:
@@ -807,7 +807,7 @@ def load_permanent_allowlist() -> set:
 def save_permanent_allowlist(patterns: set):
     """Save permanently allowed command patterns to config."""
     try:
-        from hermes_cli.config import load_config, save_config
+        from cortex_cli.config import load_config, save_config
         config = load_config()
         config["command_allowlist"] = list(patterns)
         save_config(config)
@@ -952,7 +952,7 @@ def _normalize_approval_mode(mode) -> str:
 def _get_approval_config() -> dict:
     """Read the approvals config block. Returns a dict with 'mode', 'timeout', etc."""
     try:
-        from hermes_cli.config import load_config
+        from cortex_cli.config import load_config
         config = load_config()
         return config.get("approvals", {}) or {}
     except Exception as e:
@@ -977,7 +977,7 @@ def _get_approval_timeout() -> int:
 def _get_cron_approval_mode() -> str:
     """Read the cron approval mode from config. Returns 'deny' or 'approve'."""
     try:
-        from hermes_cli.config import load_config
+        from cortex_cli.config import load_config
         config = load_config()
         mode = str(cfg_get(config, "approvals", "cron_mode", default="deny")).lower().strip()
         if mode in {"approve", "off", "allow", "yes"}:

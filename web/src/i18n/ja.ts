@@ -50,7 +50,7 @@ export const ja: Translations = {
   },
 
   app: {
-    brand: "Hermes Agent",
+    brand: "Athena Agent",
     brandShort: "HA",
     closeNavigation: "ナビゲーションを閉じる",
     closeModelTools: "モデルとツールを閉じる",
@@ -335,8 +335,8 @@ export const ja: Translations = {
     providersHint:
       "memory.provider (空 = 組み込み) と context.engine を config.yaml に書き込みます。次のセッションで有効になります。",
     refreshDashboard: "ダッシュボード拡張を再スキャン",
-    removeConfirm: "このプラグインを ~/.hermes/plugins/ から削除しますか？",
-    removeHint: "削除できるのは ~/.hermes/plugins 配下のユーザーがインストールしたプラグインのみです。",
+    removeConfirm: "このプラグインを ~/.cortex/plugins/ から削除しますか？",
+    removeHint: "削除できるのは ~/.cortex/plugins 配下のユーザーがインストールしたプラグインのみです。",
     rescanHeading: "SPA プラグインレジストリ",
     rescanHint: "ディスクにファイルを追加した後に再スキャンすると、ダッシュボードのサイドバーが新しいマニフェストを認識します。",
     runtimeHeading: "ゲートウェイランタイム (YAML プラグイン)",
@@ -358,7 +358,7 @@ export const ja: Translations = {
     all: "すべて",
     categories: "カテゴリ",
     filters: "フィルター",
-    noSkills: "スキルが見つかりません。スキルは ~/.hermes/skills/ から読み込まれます",
+    noSkills: "スキルが見つかりません。スキルは ~/.cortex/skills/ から読み込まれます",
     noSkillsMatch: "検索またはフィルターに一致するスキルはありません。",
     skillCount: "{count} スキル{s}",
     resultCount: "{count} 件の結果{s}",
@@ -372,7 +372,7 @@ export const ja: Translations = {
   },
 
   config: {
-    configPath: "~/.hermes/config.yaml",
+    configPath: "~/.cortex/config.yaml",
     filters: "フィルター",
     sections: "セクション",
     exportConfig: "設定を JSON としてエクスポート",
@@ -584,7 +584,7 @@ export const ja: Translations = {
         "「X で共有」は事前入力された投稿を新しいタブで開きます。1200×630 のバッジを添付したい場合は、先に「画像をコピー」を押してください — X では投稿エディタに直接貼り付けられます。「PNG をダウンロード」はファイルとして保存し、どこでも使えるようにします。",
       clipboard_unsupported:
         "このブラウザではクリップボードへの画像コピーがサポートされていません — 代わりに「ダウンロード」をご利用ください。",
-      tweet_text: "Just unlocked {tier_part}\"{name}\" in Hermes Agent ☤",
+      tweet_text: "Just unlocked {tier_part}\"{name}\" in Athena Agent ☤",
     },
   },
   kanban: {

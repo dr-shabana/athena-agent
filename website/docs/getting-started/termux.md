@@ -1,19 +1,19 @@
 ---
 sidebar_position: 3
 title: "Android / Termux"
-description: "Run Hermes Agent directly on an Android phone with Termux"
+description: "Run Athena Agent directly on an Android phone with Termux"
 ---
 
-# Hermes on Android with Termux
+# Athena on Android with Termux
 
-This is the tested path for running Hermes Agent directly on an Android phone through [Termux](https://termux.dev/).
+This is the tested path for running Athena Agent directly on an Android phone through [Termux](https://termux.dev/).
 
 It gives you a working local CLI on the phone, plus the core extras that are currently known to install cleanly on Android.
 
 ## What is supported in the tested path?
 
 The tested Termux bundle installs:
-- the Hermes CLI
+- the Athena CLI
 - cron support
 - PTY/background terminal support
 - Telegram gateway support (manual / best-effort background runs)
@@ -37,16 +37,16 @@ A few features still need desktop/server-style dependencies that are not publish
 - Docker-based terminal isolation is not available inside Termux
 - Android may still suspend Termux background jobs, so gateway persistence is best-effort rather than a normal managed service
 
-That does not stop Hermes from working well as a phone-native CLI agent — it just means the recommended mobile install is intentionally narrower than the desktop/server install.
+That does not stop Athena from working well as a phone-native CLI agent — it just means the recommended mobile install is intentionally narrower than the desktop/server install.
 
 ---
 
 ## Option 1: One-line installer
 
-Hermes now ships a Termux-aware installer path:
+Athena now ships a Termux-aware installer path:
 
 ```bash
-curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+curl -fsSL https://athena-agent.nousresearch.com/install.sh | bash
 ```
 
 On Termux, the installer automatically:
@@ -77,11 +77,11 @@ Why these packages?
 - `ripgrep` — fast file search
 - `ffmpeg` — media / TTS conversions
 
-### 2. Clone Hermes
+### 2. Clone Athena
 
 ```bash
-git clone https://github.com/NousResearch/hermes-agent.git
-cd hermes-agent
+git clone https://github.com/dr-shabana/athena-agent.git
+cd athena-agent
 ```
 
 ### 3. Create a virtual environment
@@ -122,7 +122,7 @@ hermes version
 hermes doctor
 ```
 
-### 7. Start Hermes
+### 7. Start Athena
 
 ```bash
 hermes
@@ -138,7 +138,7 @@ hermes
 hermes model
 ```
 
-Or set keys directly in `~/.hermes/.env`.
+Or set keys directly in `~/.cortex/.env`.
 
 ### Re-run the full interactive setup wizard later
 

@@ -84,7 +84,7 @@ class TestIRCAdapterInit:
             extra={
                 "server": "irc.libera.chat",
                 "port": 6697,
-                "nickname": "hermes",
+                "nickname": "athena",
                 "channel": "#hermes-dev",
                 "use_tls": True,
             },
@@ -93,7 +93,7 @@ class TestIRCAdapterInit:
 
         assert adapter.server == "irc.libera.chat"
         assert adapter.port == 6697
-        assert adapter.nickname == "hermes"
+        assert adapter.nickname == "athena"
         assert adapter.channel == "#hermes-dev"
         assert adapter.use_tls is True
 
@@ -177,13 +177,13 @@ class TestIRCAdapterMessageParsing:
             extra={
                 "server": "localhost",
                 "port": 6667,
-                "nickname": "hermes",
+                "nickname": "athena",
                 "channel": "#test",
                 "use_tls": False,
             },
         )
         a = IRCAdapter(cfg)
-        a._current_nick = "hermes"
+        a._current_nick = "athena"
         a._registered = True
         return a
 
@@ -310,14 +310,14 @@ class TestIRCAdapterMessageParsing:
             extra={
                 "server": "localhost",
                 "port": 6667,
-                "nickname": "hermes",
+                "nickname": "athena",
                 "channel": "#test",
                 "use_tls": False,
                 "allowed_users": ["Admin", "BOB"],
             },
         )
         adapter = IRCAdapter(cfg)
-        adapter._current_nick = "hermes"
+        adapter._current_nick = "athena"
         adapter._registered = True
         dispatched = []
 
@@ -343,14 +343,14 @@ class TestIRCAdapterMessageParsing:
             extra={
                 "server": "localhost",
                 "port": 6667,
-                "nickname": "hermes",
+                "nickname": "athena",
                 "channel": "#test",
                 "use_tls": False,
                 "allowed_users": ["Admin", "BOB"],
             },
         )
         adapter = IRCAdapter(cfg)
-        adapter._current_nick = "hermes"
+        adapter._current_nick = "athena"
         adapter._registered = True
         dispatched = []
 
@@ -578,7 +578,7 @@ class TestIRCStandaloneSend:
         # NICK uses the cron-suffixed identity to avoid colliding with the
         # long-running gateway adapter that may already hold the nickname.
         assert any(line.startswith("NICK hermesbot-cron") for line in sent_lines)
-        assert any(line.startswith("USER hermesbot-cron 0 * :Hermes Agent (cron)")
+        assert any(line.startswith("USER hermesbot-cron 0 * :Athena Agent (cron)")
                    for line in sent_lines)
         assert any(line == "PRIVMSG #cron :hello from cron" for line in sent_lines)
         assert any(line.startswith("QUIT ") for line in sent_lines)

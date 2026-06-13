@@ -84,8 +84,8 @@ def test_stage2_hook_repairs_profiles_and_cron_ownership_on_every_boot() -> None
     """profiles/ and cron/ must both be reclaimed after root-context writes."""
     text = STAGE2_HOOK.read_text(encoding="utf-8")
 
-    assert 'if [ -d "$HERMES_HOME/profiles" ]; then' in text
-    assert 'chown -R hermes:hermes "$HERMES_HOME/profiles" 2>/dev/null || true' in text
+    assert 'if [ -d "$CORTEX_HOME/profiles" ]; then' in text
+    assert 'chown -R hermes:hermes "$CORTEX_HOME/profiles" 2>/dev/null || true' in text
 
-    assert 'if [ -d "$HERMES_HOME/cron" ]; then' in text
-    assert 'chown -R hermes:hermes "$HERMES_HOME/cron" 2>/dev/null || true' in text
+    assert 'if [ -d "$CORTEX_HOME/cron" ]; then' in text
+    assert 'chown -R hermes:hermes "$CORTEX_HOME/cron" 2>/dev/null || true' in text

@@ -140,10 +140,10 @@ _MATRIX_BANG_COMMAND_RE = re.compile(
 
 
 def _resolve_matrix_bang_command(name: str) -> str | None:
-    """Resolve a ``!command`` token to a dispatchable Hermes command token.
+    """Resolve a ``!command`` token to a dispatchable Athena command token.
 
     Matrix clients often reserve leading ``/`` for local client commands.
-    Hermes accepts ``!command`` as a Matrix-friendly alias, but only for
+    Athena accepts ``!command`` as a Matrix-friendly alias, but only for
     commands that the gateway can actually dispatch so ordinary exclamations
     remain normal chat text.
 
@@ -165,7 +165,7 @@ def _resolve_matrix_bang_command(name: str) -> str | None:
         candidates.append(hyphenated)
 
     try:
-        from hermes_cli.commands import is_gateway_known_command
+        from cortex_cli.commands import is_gateway_known_command
 
         for candidate in candidates:
             if is_gateway_known_command(candidate):
@@ -191,7 +191,7 @@ def _resolve_matrix_bang_command(name: str) -> str | None:
 
 
 def _normalize_matrix_bang_command(text: str) -> str:
-    """Convert Matrix ``!command`` aliases to normal Hermes ``/command`` text."""
+    """Convert Matrix ``!command`` aliases to normal Athena ``/command`` text."""
     if not text or not text.startswith("!"):
         return text
     match = _MATRIX_BANG_COMMAND_RE.match(text)
@@ -341,8 +341,8 @@ class _MatrixModelPickerPrompt:
 MAX_MESSAGE_LENGTH = 4000
 
 # Store directory for E2EE keys and sync state.
-# Uses get_hermes_home() so each profile gets its own Matrix store.
-from hermes_constants import get_hermes_dir as _get_hermes_dir
+# Uses get_cortex_home() so each profile gets its own Matrix store.
+from cortex_constants import get_hermes_dir as _get_hermes_dir
 
 _STORE_DIR = _get_hermes_dir("platforms/matrix/store", "matrix/store")
 _CRYPTO_DB_PATH = _STORE_DIR / "crypto.db"
@@ -777,7 +777,7 @@ class MatrixAdapter(BasePlatformAdapter):
     supports_code_blocks = True  # Matrix renders fenced code blocks (HTML/markdown)
 
     # Matrix clients commonly reserve typed "/" for client-local commands;
-    # the adapter accepts "!command" as the alias that always reaches Hermes
+    # the adapter accepts "!command" as the alias that always reaches Athena
     # (see _normalize_matrix_bang_command), so instruction text shows "!".
     typed_command_prefix = "!"
 
@@ -1204,7 +1204,7 @@ class MatrixAdapter(BasePlatformAdapter):
                 resp = await client.login(
                     identifier=self._user_id,
                     password=self._password,
-                    device_name="Hermes Agent",
+                    device_name="Athena Agent",
                     device_id=self._device_id or None,
                 )
                 if resp and hasattr(resp, "device_id"):
@@ -1282,7 +1282,7 @@ class MatrixAdapter(BasePlatformAdapter):
                     await crypto_db.start()
                     self._crypto_db = crypto_db
 
-                    _acct_id = self._user_id or "hermes"
+                    _acct_id = self._user_id or "athena"
                     _pickle_key = f"{_acct_id}:{self._device_id or 'default'}"
                     crypto_store = PgCryptoStore(
                         account_id=_acct_id,
@@ -1993,7 +1993,7 @@ class MatrixAdapter(BasePlatformAdapter):
             )
 
         try:
-            from hermes_cli.providers import get_label
+            from cortex_cli.providers import get_label
             provider_label = get_label(current_provider)
         except Exception:
             provider_label = current_provider
@@ -3871,7 +3871,7 @@ class MatrixAdapter(BasePlatformAdapter):
 
         Important: only strip explicit mention tokens (``@user:server`` or
         ``@localpart``). Do NOT strip bare words matching the bot localpart,
-        otherwise normal phrases like "Hermes Agent" become "Agent".
+        otherwise normal phrases like "Athena Agent" become "Agent".
         """
         if not body:
             return ""

@@ -1,7 +1,7 @@
 """Honcho client initialization and configuration.
 
 Resolution order for config file:
-  1. $HERMES_HOME/honcho.json  (instance-local, enables isolated Hermes instances)
+  1. $CORTEX_HOME/honcho.json  (instance-local, enables isolated Athena instances)
   2. ~/.honcho/config.json     (global, shared across all Honcho-enabled apps)
   3. Environment variables     (HONCHO_API_KEY, HONCHO_ENVIRONMENT)
 
@@ -20,8 +20,8 @@ import hashlib
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from hermes_constants import get_hermes_home
-from hermes_cli.profiles import _get_default_hermes_home
+from cortex_constants import get_cortex_home
+from cortex_cli.profiles import _get_default_cortex_home
 from plugins.plugin_utils import SingletonSlot
 from typing import Any, TYPE_CHECKING
 
@@ -30,11 +30,11 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-HOST = "hermes"
+HOST = "athena"
 
 
 def profile_host_key(profile: str | None) -> str:
-    """Return the safe Honcho host key for a Hermes profile."""
+    """Return the safe Honcho host key for a Athena profile."""
     if not profile or profile in {"default", "custom"}:
         return HOST
     sanitized = "".join(c if c.isalnum() or c in "_-" else "_" for c in profile).strip("_")
@@ -52,19 +52,19 @@ def _host_block(raw: dict, host: str) -> dict:
 
 
 def resolve_active_host() -> str:
-    """Derive the Honcho host key from the active Hermes profile.
+    """Derive the Honcho host key from the active Athena profile.
 
     Resolution order:
       1. HERMES_HONCHO_HOST env var (explicit override)
       2. Active profile name via profiles system -> ``hermes.<profile>``
-      3. Fallback: ``"hermes"`` (default profile)
+      3. Fallback: ``"athena"`` (default profile)
     """
     explicit = os.environ.get("HERMES_HONCHO_HOST", "").strip()
     if explicit:
         return explicit
 
     try:
-        from hermes_cli.profiles import get_active_profile_name
+        from cortex_cli.profiles import get_active_profile_name
         profile = get_active_profile_name()
         return profile_host_key(profile)
     except Exception:
@@ -81,18 +81,18 @@ def resolve_config_path() -> Path:
     """Return the active Honcho config path.
 
     Resolution order:
-      1. $HERMES_HOME/honcho.json      (profile-local, if it exists)
-      2. ~/.hermes/honcho.json          (default profile — shared host blocks live here)
+      1. $CORTEX_HOME/honcho.json      (profile-local, if it exists)
+      2. ~/.cortex/honcho.json          (default profile — shared host blocks live here)
       3. ~/.honcho/config.json          (global, cross-app interop)
 
     Returns the global path if none exist (for first-time setup writes).
     """
-    local_path = get_hermes_home() / "honcho.json"
+    local_path = get_cortex_home() / "honcho.json"
     if local_path.exists():
         return local_path
 
     # Default profile's config — host blocks accumulate here via setup/clone
-    default_path = _get_default_hermes_home() / "honcho.json"
+    default_path = _get_default_cortex_home() / "honcho.json"
     if default_path != local_path and default_path.exists():
         return default_path
 
@@ -293,7 +293,7 @@ class HonchoClientConfig:
     """Configuration for Honcho client, resolved for a specific host."""
 
     host: str = HOST
-    workspace_id: str = "hermes"
+    workspace_id: str = "athena"
     api_key: str | None = None
     environment: str = "production"
     # Optional base URL for self-hosted Honcho (overrides environment mapping)
@@ -302,7 +302,7 @@ class HonchoClientConfig:
     timeout: float | None = None
     # Identity
     peer_name: str | None = None
-    ai_peer: str = "hermes"
+    ai_peer: str = "athena"
     # When True, ``peer_name`` wins over any gateway-supplied runtime
     # identity (Telegram UID, Discord ID, …) when resolving the user peer.
     # This keeps memory unified across platforms for single-user deployments
@@ -331,7 +331,7 @@ class HonchoClientConfig:
     # honcho_reasoning tool param (agentic). When false, always uses
     # dialecticReasoningLevel and ignores model-provided overrides.
     dialectic_dynamic: bool = True
-    # Max chars of dialectic result to inject into Hermes system prompt
+    # Max chars of dialectic result to inject into Athena system prompt
     dialectic_max_chars: int = 600
     # Dialectic depth: how many .chat() calls per dialectic cycle (1-3).
     # Depth 1: single call. Depth 2: self-audit + targeted synthesis.
@@ -382,7 +382,7 @@ class HonchoClientConfig:
     @classmethod
     def from_env(
         cls,
-        workspace_id: str = "hermes",
+        workspace_id: str = "athena",
         host: str | None = None,
     ) -> HonchoClientConfig:
         """Create config from environment variables (fallback)."""
@@ -409,8 +409,8 @@ class HonchoClientConfig:
     ) -> HonchoClientConfig:
         """Create config from the resolved Honcho config path.
 
-        Resolution: $HERMES_HOME/honcho.json -> ~/.honcho/config.json -> env vars.
-        When host is None, derives it from the active Hermes profile.
+        Resolution: $CORTEX_HOME/honcho.json -> ~/.honcho/config.json -> env vars.
+        When host is None, derives it from the active Athena profile.
         """
         resolved_host = host or resolve_active_host()
         path = config_path or resolve_config_path()
@@ -680,9 +680,9 @@ class HonchoClientConfig:
 
         Resolution order:
           1. Manual directory override from sessions map
-          2. Hermes session title (from /title command)
+          2. Athena session title (from /title command)
           3. Gateway session key (stable per-chat identifier from gateway platforms)
-          4. per-session strategy — Hermes session_id ({timestamp}_{hex})
+          4. per-session strategy — Athena session_id ({timestamp}_{hex})
           5. per-repo strategy — git repo root directory name
           6. per-directory strategy — directory basename
           7. global strategy — workspace name
@@ -715,7 +715,7 @@ class HonchoClientConfig:
             if sanitized:
                 return self._enforce_session_id_limit(sanitized, gateway_session_key)
 
-        # per-session: inherit Hermes session_id (new Honcho session each run)
+        # per-session: inherit Athena session_id (new Honcho session each run)
         if self.session_strategy == "per-session" and session_id:
             if self.session_peer_prefix and self.peer_name:
                 return f"{self.peer_name}-{session_id}"
@@ -794,7 +794,7 @@ def get_honcho_client(config: HonchoClientConfig | None = None) -> Honcho:
             raise ImportError(
                 "honcho-ai is required for Honcho integration. "
                 "Install it with: pip install honcho-ai  "
-                "(or run `hermes honcho setup` to configure)."
+                "(or run `athena honcho setup` to configure)."
             )
 
         # Allow config.yaml honcho.base_url to override the SDK's environment
@@ -804,7 +804,7 @@ def get_honcho_client(config: HonchoClientConfig | None = None) -> Honcho:
         resolved_timeout = config.timeout
         if not resolved_base_url or resolved_timeout is None:
             try:
-                from hermes_cli.config import load_config
+                from cortex_cli.config import load_config
                 hermes_cfg = load_config()
                 honcho_cfg = hermes_cfg.get("honcho", {})
                 if isinstance(honcho_cfg, dict):

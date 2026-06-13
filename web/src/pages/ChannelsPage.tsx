@@ -262,7 +262,7 @@ export default function ChannelsPage() {
 
       <p className="text-xs text-muted-foreground">
         {configured} of {platforms.length} channels configured. Credentials are
-        written to <code className="font-courier">~/.hermes/.env</code>; the
+        written to <code className="font-courier">~/.cortex/.env</code>; the
         gateway connects each enabled channel on its next restart.
       </p>
 
@@ -562,7 +562,7 @@ function TelegramOnboardingPanel({
     setDetectedOwnerId(null);
     setNewAllowedId("");
     try {
-      const res = await api.startTelegramOnboarding({ bot_name: "Hermes Agent" });
+      const res = await api.startTelegramOnboarding({ bot_name: "Athena Agent" });
       const dataUrl = await QRCode.toDataURL(res.qr_payload, {
         errorCorrectionLevel: "M",
         margin: 1,

@@ -78,7 +78,7 @@ class TestSandboxRequirements(unittest.TestCase):
         self.assertIn("code", EXECUTE_CODE_SCHEMA["parameters"]["required"])
 
 
-class TestHermesToolsGeneration(unittest.TestCase):
+class TestAthenaToolsGeneration(unittest.TestCase):
     def test_generates_all_allowed_tools(self):
         src = generate_hermes_tools_module(list(SANDBOX_ALLOWED_TOOLS))
         for tool in SANDBOX_ALLOWED_TOOLS:
@@ -201,9 +201,9 @@ class TestExecuteCode(unittest.TestCase):
 
     def test_repo_root_modules_are_importable(self):
         """Sandboxed scripts can import modules that live at the repo root."""
-        result = self._run('import hermes_constants; print(hermes_constants.__file__)')
+        result = self._run('import cortex_constants; print(cortex_constants.__file__)')
         self.assertEqual(result["status"], "success")
-        self.assertIn("hermes_constants.py", result["output"])
+        self.assertIn("cortex_constants.py", result["output"])
 
     def test_single_tool_call(self):
         """Script calls terminal and prints the result."""
@@ -604,7 +604,7 @@ class TestBuildExecuteCodeSchema(unittest.TestCase):
     def test_real_scenario_all_sandbox_tools_disabled(self):
         """Reproduce the exact code path from model_tools.py:231-234.
 
-        Scenario: user runs `hermes tools code_execution` (only code_execution
+        Scenario: user runs `cortex tools code_execution` (only code_execution
         toolset enabled). tools_to_include = {"execute_code"}.
 
         model_tools.py does:
@@ -629,7 +629,7 @@ class TestBuildExecuteCodeSchema(unittest.TestCase):
                          "Bug: broken import syntax sent to the model")
 
     def test_real_scenario_only_vision_enabled(self):
-        """Another real path: user runs `hermes tools code_execution,vision`.
+        """Another real path: user runs `cortex tools code_execution,vision`.
 
         tools_to_include = {"execute_code", "vision_analyze"}
         SANDBOX_ALLOWED_TOOLS has neither, so intersection is empty.
@@ -849,7 +849,7 @@ class TestLoadConfig(unittest.TestCase):
 
     def test_returns_code_execution_section(self):
         from tools.code_execution_tool import _load_config
-        with patch("hermes_cli.config.read_raw_config",
+        with patch("cortex_cli.config.read_raw_config",
                    return_value={"code_execution": {"timeout": 120, "max_tool_calls": 10}}):
             result = _load_config()
         self.assertEqual(result, {"timeout": 120, "max_tool_calls": 10})
@@ -859,7 +859,7 @@ class TestLoadConfig(unittest.TestCase):
         mock_cli = MagicMock()
         mock_cli.CLI_CONFIG = {"code_execution": {"timeout": 999}}
         with patch.dict("sys.modules", {"cli": mock_cli}), \
-             patch("hermes_cli.config.read_raw_config", return_value={}):
+             patch("cortex_cli.config.read_raw_config", return_value={}):
             result = _load_config()
         self.assertEqual(result, {})
 

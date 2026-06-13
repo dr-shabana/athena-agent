@@ -13,7 +13,7 @@ def test_metadata_as_dict_with_hermes():
     """Normal case: metadata is a dict containing hermes keys."""
     frontmatter = {
         "metadata": {
-            "hermes": {
+            "athena": {
                 "fallback_for_toolsets": ["toolset_a"],
                 "requires_toolsets": ["toolset_b"],
                 "fallback_for_tools": ["tool_x"],
